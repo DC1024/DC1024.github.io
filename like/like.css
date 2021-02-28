@@ -19,11 +19,11 @@
 .dcchen
 {
 	position:absolute;
-  	button:250px;
+  	top:800px;
 	left: 50px;
 	font-size: 50px;
 	border-radius:100px;
-	width:125px;
+	width:75px;
 	color:white
 }
 .icon
