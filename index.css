@@ -15,13 +15,6 @@
                 -o-background-size: cover;
                 background-position: center 0;
             }
-.name{
-	position:absolute;
-  	top:300px;
-	left: 860px;
-	font-size: 50px;
-	color:white
-}
 .dcchen
 {
 	position:absolute;
@@ -55,11 +48,10 @@
 .github
 {
 	position:absolute;
-  	top:385px;
-	left: 1080px;
-	font-size: 50px;
+  	top:490px;
+	left: 1090px;
 	border-radius:0px;
-	width:85px;
+	width:90px;
 	color:white
 }
 .like
@@ -67,6 +59,25 @@
 	position:absolute;
   	top:500px;
 	left: 695px;
+	font-size: 50px;
+	border-radius:0px;
+	width:95px;
+	color:white
+}
+.zspace
+{
+	position:absolute;
+  	top:380px;
+	left: 1075px;
+	border-radius:0px;
+	width:110px;
+	color:white
+}
+.Repositorie
+{
+	position:absolute;
+  	top:498px;
+	left: 898px;
 	font-size: 50px;
 	border-radius:0px;
 	width:95px;
