@@ -19,5 +19,14 @@ top:380px;
 left: 800px;
 绝对定位，设置为距离页面顶部 380px，距离页面左侧 800px
 
+letter-spacing:8px;
+字间距
+
+font-weight: lighter;
+字体粗细
+
 学习资料
 https://www.w3school.com.cn/index.html
+
+Pac man github
+https://github.com/macek/google_pacman
