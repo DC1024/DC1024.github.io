@@ -25,6 +25,16 @@
 	width:125px;
 	color:white
 }
+.pacman
+{
+	position:absolute;
+  	top:800px;
+	left: 575px;
+	font-size: 50px;
+	border-radius:100px;
+	width:125px;
+	color:white
+}
 .divbg
 {
 	margin:0 auto;
