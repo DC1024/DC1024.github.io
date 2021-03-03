@@ -1,0 +1,42 @@
+.bg
+{
+	background:#93b5cf
+}
+.error
+{
+	position: absolute;
+	top: -55px;
+	left:680px;
+	font-size:225px;
+	font-weight: bolder;
+	color: aliceblue
+}
+.say1
+{
+	width: auto;
+	letter-spacing:8px;
+	position: absolute;
+	top: 400px;
+	left:539px;
+	font-size:100px;
+	font-weight: lighter;
+	color: aliceblue
+}
+.dcchen
+{
+	position:absolute;
+  	top:825px;
+	left: 50px;
+	border-radius:100px;
+	width:75px;
+	color:white
+}
+.pacman
+{
+	position:absolute;
+  	top:812px;
+	left: 165px;
+	border-radius:100px;
+	width:105px;
+	color:white
+}
