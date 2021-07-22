@@ -83,3 +83,33 @@
 	width:95px;
 	color:white
 }
+.TinyTinyRSS
+{
+	position:absolute;
+  	top:625px;
+	left: 700px;
+	font-size: 50px;
+	border-radius:0px;
+	width:95px;
+	color:white
+}
+.WordPress
+{
+	position:absolute;
+  	top:625px;
+	left: 898px;
+	font-size: 50px;
+	border-radius:0px;
+	width:95px;
+	color:white
+}
+.PhpMyAdmin
+{
+	position:absolute;
+  	top:615px;
+	left: 1060px;
+	font-size: 65px;
+	border-radius:0px;
+	width:115px;
+	color:white
+}
