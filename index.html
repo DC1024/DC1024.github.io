@@ -3,16 +3,24 @@
 <head>
 <meta charset="utf-8">
 <title>DC WebSite</title>
+<!--链接CSS-->
 <link rel="stylesheet" type="text/css" href="index.css">
+<link rel="stylesheet" type="text/css" href="iconfont/iconfont.css">
 <!--设置标题栏图像-->
 <link rel="shortcut icon" href="img/DCchen.jpg">
-<!--设置标题栏图像-->
 </head>
 <body>
+	<!--引入 symbol 代码-->
+	<script src="./iconfont/iconfont.js"></script>
 	<div class="bg"></div>
 	<a href="about me/about.html" target="_blank"><img src="img/DCchen.jpg" class="dcchen" alt="logo" title="About me"></a>
 	<a href="https://space.bilibili.com/36174251" target="_blank"><img src="img/bilibili.png" class="bilibili" alt="bilibili" title="哔哩哔哩"></a>
-	<a href="https://www.zhihu.com/people/1565710276" target="_blank"><img src="img/zhihu.png" class="zhihu" alt="zhihu" title="知乎"></a>
+	<svg class="zhihuicon" aria-hidden="true">
+	<a xlink:href="https://www.zhihu.com/people/1565710276" target="_blank">
+	<use xlink:href="#icon-29"></use>
+	</a>
+	</svg>
+
 	<a href="https://github.com/DC1024" target="_blank"><img src="img/github.png" class="github" alt="github" title="Github"></a>
 	<a href="like/like.html" target="_blank"><img src="img/like.png" class="like" alt="like" title="收藏"></a>
 	<a href="https://www.zconnect.cn" target="_blank"><img src="img/zspace.png" class="zspace" alt="like" title="极空间"></a>
