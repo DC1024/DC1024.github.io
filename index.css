@@ -37,11 +37,11 @@
 .bilibili
 {
 	position:absolute;
-  	top:385px;
-	left: 700px;
+  	top:375px;
+	left: 705px;
 	font-size: 50px;
 	border-radius:0px;
-	width:85px;
+	width:90px;
 	color:white
 }
 .github
