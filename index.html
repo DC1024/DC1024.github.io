@@ -1,44 +1,453 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="zh-CN">
 <head>
-<meta charset="utf-8">
-<title>DC WebSite</title>
-<!--链接CSS-->
-<link rel="stylesheet" type="text/css" href="index.css">
-<link rel="stylesheet" type="text/css" href="iconfont/iconfont.css">
-<!--设置标题栏图像-->
-<link rel="shortcut icon" href="img/DCchen.jpg">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DC1024 · 个人主页</title>
+<meta name="description" content="DC1024 的个人主页 —— 自建基础设施与开源工具爱好者，维护 MirrorPilot 与 iso-hub 等项目。" />
+<style>
+  :root {
+    --bg: #070b14;
+    --bg-2: #0b1120;
+    --panel: rgba(255, 255, 255, 0.045);
+    --panel-hover: rgba(255, 255, 255, 0.07);
+    --border: rgba(255, 255, 255, 0.09);
+    --border-strong: rgba(120, 180, 255, 0.28);
+    --text: #e7eef8;
+    --muted: #8a9bb5;
+    --faint: #5d6c85;
+    --accent: #38bdf8;
+    --accent-2: #818cf8;
+    --cyan: #22d3ee;
+    --green: #34d399;
+    --radius: 16px;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    position: relative;
+  }
+  /* animated backdrop */
+  .backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    background:
+      radial-gradient(900px 600px at 12% -5%, rgba(56, 189, 248, 0.16), transparent 60%),
+      radial-gradient(800px 600px at 100% 0%, rgba(129, 140, 248, 0.14), transparent 55%),
+      radial-gradient(700px 700px at 50% 120%, rgba(34, 211, 238, 0.10), transparent 60%),
+      linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+  }
+  .grid-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    background-size: 46px 46px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, #000 40%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, #000 40%, transparent 100%);
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  /* nav */
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px clamp(20px, 5vw, 64px);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.3s, background 0.3s;
+  }
+  .nav.scrolled {
+    border-bottom: 1px solid var(--border);
+    background: rgba(7, 11, 20, 0.72);
+  }
+  .brand {
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .brand .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 12px var(--accent);
+  }
+  .brand b {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .nav-links { display: flex; align-items: center; gap: 26px; }
+  .nav-links a {
+    color: var(--muted);
+    font-size: 14px;
+    transition: color 0.2s;
+    position: relative;
+  }
+  .nav-links a:hover { color: var(--text); }
+  .nav-links a::after {
+    content: "";
+    position: absolute; left: 0; bottom: -6px;
+    width: 0; height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    transition: width 0.25s;
+  }
+  .nav-links a:hover::after { width: 100%; }
+  .nav-gh {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text);
+    font-size: 13px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .nav-gh:hover { border-color: var(--border-strong); background: var(--panel); }
+
+  .container { max-width: 1040px; margin: 0 auto; padding: 0 clamp(20px, 5vw, 64px); }
+
+  /* hero */
+  .hero {
+    padding: clamp(70px, 12vh, 130px) 0 clamp(50px, 8vh, 90px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .avatar {
+    width: 116px; height: 116px;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    font-family: var(--mono);
+    font-weight: 800;
+    font-size: 38px;
+    color: #061018;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    box-shadow: 0 0 0 6px rgba(56, 189, 248, 0.12), 0 0 40px rgba(56, 189, 248, 0.35);
+    position: relative;
+    margin-bottom: 26px;
+  }
+  .avatar::before {
+    content: "";
+    position: absolute; inset: -6px;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, var(--accent), var(--accent-2), var(--cyan), var(--accent));
+    z-index: -1;
+    filter: blur(4px);
+    opacity: 0.7;
+    animation: spin 8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .hero h1 {
+    font-size: clamp(34px, 6vw, 56px);
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    line-height: 1.15;
+  }
+  .hero h1 .grad {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2) 60%, var(--cyan));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .tagline {
+    margin-top: 18px;
+    color: var(--muted);
+    font-size: clamp(15px, 2.2vw, 18px);
+    max-width: 620px;
+  }
+  .meta-row {
+    margin-top: 22px;
+    display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 13px; color: var(--muted);
+    padding: 7px 14px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--panel);
+  }
+  .chip .ic { color: var(--accent); }
+
+  .cta-row { margin-top: 34px; display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 22px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: transform 0.15s, box-shadow 0.2s, border-color 0.2s;
+    border: 1px solid var(--border);
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #061018;
+    border: none;
+    box-shadow: 0 8px 24px rgba(56, 189, 248, 0.28);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(56, 189, 248, 0.4); }
+  .btn-ghost { background: var(--panel); color: var(--text); }
+  .btn-ghost:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+
+  /* sections */
+  section { padding: clamp(48px, 8vh, 80px) 0; }
+  .sec-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 34px; }
+  .sec-head h2 {
+    font-size: clamp(24px, 4vw, 32px);
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+  .sec-head .idx {
+    font-family: var(--mono);
+    color: var(--accent);
+    font-size: 14px;
+    opacity: 0.8;
+  }
+  .sec-head .line {
+    flex: 1; height: 1px;
+    background: linear-gradient(90deg, var(--border-strong), transparent);
+  }
+
+  .about p { color: var(--muted); font-size: 16px; max-width: 760px; }
+  .about p + p { margin-top: 14px; }
+  .about b { color: var(--text); font-weight: 600; }
+
+  /* featured projects */
+  .feat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .feat {
+    position: relative;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--panel);
+    padding: 26px;
+    overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s, background 0.2s;
+  }
+  .feat::after {
+    content: "";
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    opacity: 0; transition: opacity 0.25s;
+  }
+  .feat:hover { transform: translateY(-4px); border-color: var(--border-strong); background: var(--panel-hover); }
+  .feat:hover::after { opacity: 1; }
+  .feat .ptag {
+    font-family: var(--mono); font-size: 12px; color: var(--accent);
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+  .feat h3 { font-size: 22px; margin: 8px 0 12px; font-weight: 700; }
+  .feat p { color: var(--muted); font-size: 14.5px; }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 20px; }
+  .badge {
+    font-family: var(--mono); font-size: 11.5px;
+    padding: 4px 10px; border-radius: 6px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    background: rgba(255,255,255,0.03);
+  }
+  .badge.lang { color: var(--cyan); border-color: rgba(34,211,238,0.3); }
+  .feat .links { display: flex; gap: 12px; }
+  .feat .links a {
+    font-size: 13.5px; font-weight: 600; color: var(--text);
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: color 0.2s;
+  }
+  .feat .links a:hover { color: var(--accent); }
+
+  /* other projects */
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .card {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--panel);
+    padding: 20px;
+    transition: transform 0.18s, border-color 0.2s, background 0.2s;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .card:hover { transform: translateY(-3px); border-color: var(--border-strong); background: var(--panel-hover); }
+  .card h4 { font-size: 16px; font-weight: 700; font-family: var(--mono); }
+  .card p { color: var(--muted); font-size: 13.5px; flex: 1; }
+  .card .meta { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--faint); font-family: var(--mono); }
+  .card .meta .star { color: #fbbf24; }
+  .card .arrow { color: var(--accent); font-size: 13px; align-self: flex-start; }
+
+  /* footer */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 36px 0 48px;
+    text-align: center;
+    color: var(--faint);
+    font-size: 13px;
+  }
+  footer a { color: var(--muted); }
+  footer a:hover { color: var(--accent); }
+  footer .heart { color: #f472b6; }
+
+  /* reveal */
+  .reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.6s ease, transform 0.6s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+
+  @media (max-width: 760px) {
+    .feat-grid { grid-template-columns: 1fr; }
+    .grid { grid-template-columns: 1fr; }
+    .nav-links { gap: 16px; }
+    .nav-links .hide-sm { display: none; }
+  }
+</style>
 </head>
 <body>
-	<!--引入 symbol 代码-->
-	<script src="//at.alicdn.com/t/font_2701927_693ypqx55ai.js"></script>
-	
-	<div class="bg"></div>
-	
-	<!--ABOUT ME-->
-	<a href="about me/about.html" target="_blank"><img src="img/DCchen.jpg" class="dcchen" alt="logo" title="About me"></a>
-	
-	<!--哔哩哔哩-->
-	<svg class="bilibili" aria-hidden="true">
-	<a xlink:href="https://space.bilibili.com/36174251" target="_blank">
-	<use xlink:href="#icon-bilibili"></use>
-	</a>
-	</svg>
-	
-	<!--知乎-->
-	<svg class="zhihuicon" aria-hidden="true">
-	<a xlink:href="https://www.zhihu.com/people/1565710276" target="_blank">
-	<use xlink:href="#icon-29"></use>
-	</a>
-	</svg>
+  <div class="backdrop"></div>
+  <div class="grid-overlay"></div>
 
-	<a href="https://github.com/DC1024" target="_blank"><img src="img/github.png" class="github" alt="github" title="Github"></a>
-	<a href="like/like.html" target="_blank"><img src="img/like.png" class="like" alt="like" title="收藏"></a>
-	<a href="https://www.zconnect.cn" target="_blank"><img src="img/zspace.png" class="zspace" alt="like" title="极空间"></a>
-	<a href="https://github.com/DC1024/DC1024.github.io" target="_blank"><img src="img/Repositories.png" class="Repositorie" alt="Repositorie" title="项目"></a>
-	<a href="http://192.168.43.117:8006" target="_blank"><img src="img/rss.png" class="TinyTinyRSS" alt="TinyTinyRSS" title="TinyTinyRSS"></a>
-	<a href="http://192.168.43.117:8004" target="_blank"><img src="img/wordpress.png" class="WordPress" alt="WordPress" title="WordPress"></a>
-	<a href="http://192.168.43.117:8002" target="_blank"><img src="img/PhpMyAdmin.png" class="PhpMyAdmin" alt="PhpMyAdmin" title="PhpMyAdmin"></a>
+  <nav class="nav" id="nav">
+    <div class="brand"><span class="dot"></span><span>DC<b>1024</b></span></div>
+    <div class="nav-links">
+      <a href="#about" class="hide-sm">关于</a>
+      <a href="#projects">项目</a>
+      <a href="#more" class="hide-sm">更多</a>
+      <a class="nav-gh" href="https://github.com/DC1024" target="_blank" rel="noopener">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+        GitHub
+      </a>
+    </div>
+  </nav>
 
+  <header class="hero container">
+    <div class="avatar">DC</div>
+    <h1>你好，我是 <span class="grad">DC1024</span></h1>
+    <p class="tagline">自建基础设施与开源工具爱好者。喜欢把服务器、Docker、镜像与监控这类「脏活累活」自动化，并尽可能用免费、开源的方案解决。</p>
+    <div class="meta-row">
+      <span class="chip"><span class="ic">📍</span> Guangdong, China</span>
+      <span class="chip"><span class="ic">⚙️</span> 自托管 / Self-hosted</span>
+      <span class="chip"><span class="ic">🔧</span> Go · Python · Docker</span>
+    </div>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="#projects">查看项目</a>
+      <a class="btn btn-ghost" href="https://github.com/DC1024" target="_blank" rel="noopener">GitHub 主页 →</a>
+    </div>
+  </header>
+
+  <section id="about" class="container about reveal">
+    <div class="sec-head">
+      <span class="idx">01</span><h2>关于我</h2><span class="line"></span>
+    </div>
+    <p>我折腾各种能跑在服务器上的东西：从一台腾讯云轻量实例到家里四五台内网机器，全部用 Docker + 1Panel 统一管理，并用 Beszel 做监控。</p>
+    <p>当前在维护 <b>MirrorPilot</b>（容器镜像源测速与迁移面板）与 <b>iso-hub</b>（自建 Linux 发行版 ISO 镜像站）等开源项目，也顺手做一些工具的汉化与部署 skill。信奉<b>免费、开源、能自托管就绝不接闭源中间件</b>。</p>
+  </section>
+
+  <section id="projects" class="container reveal">
+    <div class="sec-head">
+      <span class="idx">02</span><h2>核心项目</h2><span class="line"></span>
+    </div>
+    <div class="feat-grid">
+      <article class="feat">
+        <span class="ptag">Featured · Go</span>
+        <h3>MirrorPilot</h3>
+        <p>自托管面板，探测容器镜像源速度并通过 GitHub Actions 自动迁移镜像。Go 编写，单一静态二进制、无 CGO 依赖，开箱即用，专为受限网络环境设计。</p>
+        <div class="badges">
+          <span class="badge lang">Go</span>
+          <span class="badge">Single binary</span>
+          <span class="badge">No CGO</span>
+          <span class="badge">GitHub Actions</span>
+        </div>
+        <div class="links">
+          <a href="https://github.com/DC1024/mirrorpilot" target="_blank" rel="noopener">★ 仓库</a>
+          <a href="https://github.com/DC1024/mirrorpilot#readme" target="_blank" rel="noopener">文档 →</a>
+        </div>
+      </article>
+
+      <article class="feat">
+        <span class="ptag">Featured · Python</span>
+        <h3>iso-hub</h3>
+        <p>自建 Linux 发行版 ISO 镜像站，集成 SMB / WebDAV 文件分享与 qBittorrent 种子下载，一条龙搞定镜像的获取、存储与分发。</p>
+        <div class="badges">
+          <span class="badge lang">Python</span>
+          <span class="badge">ISO Mirror</span>
+          <span class="badge">SMB / WebDAV</span>
+          <span class="badge">qBittorrent</span>
+        </div>
+        <div class="links">
+          <a href="https://github.com/DC1024/iso-hub" target="_blank" rel="noopener">★ 仓库</a>
+          <a href="https://github.com/DC1024/iso-hub#readme" target="_blank" rel="noopener">文档 →</a>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section id="more" class="container reveal">
+    <div class="sec-head">
+      <span class="idx">03</span><h2>更多项目</h2><span class="line"></span>
+    </div>
+    <div class="grid">
+      <a class="card" href="https://github.com/DC1024/wud_zh" target="_blank" rel="noopener">
+        <h4>wud_zh</h4>
+        <p>WUD（What's Up Docker）中文汉化镜像，让容器始终保持最新。</p>
+        <div class="meta"><span>Docker</span><span class="arrow">→ 查看</span></div>
+      </a>
+      <a class="card" href="https://github.com/DC1024/asf-caddy-docker-deploy-skills" target="_blank" rel="noopener">
+        <h4>asf-caddy-deploy</h4>
+        <p>在任意 Docker 环境部署 ArchiSteamFarm 挂卡工具，内置 Steam / GitHub 反代绕过 SNI 阻断。</p>
+        <div class="meta"><span>Python</span><span class="arrow">→ 查看</span></div>
+      </a>
+      <a class="card" href="https://github.com/DC1024/Beanconqueror" target="_blank" rel="noopener">
+        <h4>Beanconqueror</h4>
+        <p>咖啡爱好者开源应用的中文汉化项目。</p>
+        <div class="meta"><span class="star">★ 13</span><span>TypeScript</span><span class="arrow">→ 查看</span></div>
+      </a>
+      <a class="card" href="https://github.com/DC1024/kami-local-fonts-skill" target="_blank" rel="noopener">
+        <h4>kami-local-fonts</h4>
+        <p>Kami 排版 skill 的本地字体版，中文替换为得意黑（OFL），优先本地加载。</p>
+        <div class="meta"><span>HTML</span><span class="arrow">→ 查看</span></div>
+      </a>
+      <a class="card" href="https://github.com/DC1024/aseprite-build" target="_blank" rel="noopener">
+        <h4>aseprite-build</h4>
+        <p>像素动画编辑器 Aseprite 的自建编译（Windows / macOS / Linux）。</p>
+        <div class="meta"><span>C++</span><span class="arrow">→ 查看</span></div>
+      </a>
+      <a class="card" href="https://github.com/DC1024" target="_blank" rel="noopener">
+        <h4>全部仓库 →</h4>
+        <p>在 GitHub 上浏览 DC1024 的全部开源仓库与 fork。</p>
+        <div class="meta"><span>GitHub</span><span class="arrow">→ 前往</span></div>
+      </a>
+    </div>
+  </section>
+
+  <footer class="container">
+    <p>© <span id="year"></span> DC1024 · 用 <span class="heart">♥</span> 与开源工具搭建 · <a href="https://github.com/DC1024" target="_blank" rel="noopener">GitHub</a></p>
+  </footer>
+
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+    const nav = document.getElementById("nav");
+    const onScroll = () => nav.classList.toggle("scrolled", window.scrollY > 12);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+    }, { threshold: 0.12 });
+    document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+  </script>
 </body>
 </html>
