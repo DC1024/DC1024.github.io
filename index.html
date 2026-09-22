@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>DC1024 · 个人主页</title>
-<meta name="description" content="DC1024 的个人主页 —— 自建基础设施与开源工具爱好者，维护 MirrorPilot 与 iso-hub 等项目。" />
+<title>DC · 个人主页</title>
+<meta name="description" content="DC 的个人主页 —— 维护 MirrorPilot 与 iso-hub 等开源项目。" />
 <style>
   :root {
     --bg: #070b14;
@@ -92,12 +92,6 @@
     background: var(--accent);
     box-shadow: 0 0 12px var(--accent);
   }
-  .brand b {
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
   .nav-links { display: flex; align-items: center; gap: 26px; }
   .nav-links a {
     color: var(--muted);
@@ -136,17 +130,18 @@
     text-align: center;
   }
   .avatar {
-    width: 116px; height: 116px;
+    width: 124px; height: 124px;
     border-radius: 50%;
-    display: grid; place-items: center;
-    font-family: var(--mono);
-    font-weight: 800;
-    font-size: 38px;
-    color: #061018;
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
     box-shadow: 0 0 0 6px rgba(56, 189, 248, 0.12), 0 0 40px rgba(56, 189, 248, 0.35);
     position: relative;
+    overflow: hidden;
     margin-bottom: 26px;
+  }
+  .avatar img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    border-radius: 50%;
   }
   .avatar::before {
     content: "";
@@ -171,25 +166,6 @@
     background-clip: text;
     -webkit-text-fill-color: transparent;
   }
-  .tagline {
-    margin-top: 18px;
-    color: var(--muted);
-    font-size: clamp(15px, 2.2vw, 18px);
-    max-width: 620px;
-  }
-  .meta-row {
-    margin-top: 22px;
-    display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;
-  }
-  .chip {
-    display: inline-flex; align-items: center; gap: 7px;
-    font-size: 13px; color: var(--muted);
-    padding: 7px 14px;
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    background: var(--panel);
-  }
-  .chip .ic { color: var(--accent); }
 
   .cta-row { margin-top: 34px; display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
   .btn {
@@ -229,10 +205,6 @@
     flex: 1; height: 1px;
     background: linear-gradient(90deg, var(--border-strong), transparent);
   }
-
-  .about p { color: var(--muted); font-size: 16px; max-width: 760px; }
-  .about p + p { margin-top: 14px; }
-  .about b { color: var(--text); font-weight: 600; }
 
   /* featured projects */
   .feat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
@@ -303,7 +275,7 @@
   <div class="grid-overlay"></div>
 
   <nav class="nav" id="nav">
-    <div class="brand"><span class="dot"></span><span>DC<b>1024</b></span></div>
+    <div class="brand"><span class="dot"></span><span>DC</span></div>
     <div class="nav-links">
       <a href="#projects">项目</a>
       <a class="nav-gh" href="https://github.com/DC1024" target="_blank" rel="noopener">
@@ -314,14 +286,8 @@
   </nav>
 
   <header class="hero container">
-    <div class="avatar">DC</div>
-    <h1>你好，我是 <span class="grad">DC1024</span></h1>
-    <p class="tagline">自建基础设施与开源工具爱好者。喜欢把服务器、Docker、镜像与监控这类「脏活累活」自动化，并尽可能用免费、开源的方案解决。</p>
-    <div class="meta-row">
-      <span class="chip"><span class="ic">📍</span> Guangdong, China</span>
-      <span class="chip"><span class="ic">⚙️</span> 自托管 / Self-hosted</span>
-      <span class="chip"><span class="ic">🔧</span> Go · Python · Docker</span>
-    </div>
+    <div class="avatar"><img src="https://github.com/DC1024.png" alt="DC1024" /></div>
+    <h1>你好，我是 <span class="grad">DC</span></h1>
     <div class="cta-row">
       <a class="btn btn-primary" href="#projects">查看项目</a>
       <a class="btn btn-ghost" href="https://github.com/DC1024" target="_blank" rel="noopener">GitHub 主页 →</a>
@@ -368,7 +334,7 @@
   </section>
 
   <footer class="container">
-    <p>© <span id="year"></span> DC1024 · 用 <span class="heart">♥</span> 与开源工具搭建 · <a href="https://github.com/DC1024" target="_blank" rel="noopener">GitHub</a></p>
+    <p>© <span id="year"></span> DC · 用 <span class="heart">♥</span> 与开源工具搭建 · <a href="https://github.com/DC1024" target="_blank" rel="noopener">GitHub</a></p>
   </footer>
 
   <script>
