@@ -1553,9 +1553,15 @@
              一开始想「第一排给 eager」—— 实测那会让首屏白白多下 20.6 KiB
              （4 张缩略图），而它们对 FCP/LCP 毫无贡献。全 lazy 之后首屏
              图像请求只剩视频封面，这部分字节是纯赚回来的。
-             注意：浏览器对 lazy 的判定用的是「离视口多远」，第二屏恰好在一屏之外，
-             所以是真的不会提前拉。 */
+
+             注意：浏览器对 lazy 的判定用的是「离视口多远」。3 张时只有一排，
+             恰好在 Chromium 的预热距离之外；涨到 6 张变成两排后，第一排进入了
+             约 1250px 的预热范围 —— 实测 6 张缩略图在 919ms 就和视频封面一起开下，
+             首屏传输从 250KiB 涨到 442KiB，而它们对 LCP 毫无贡献。
+             fetchpriority="low" 是标准解法：不改变「下不下」，只把它们排到
+             首屏关键资源之后，不再抢封面图的带宽。 */
           img.loading = "lazy";
+          img.fetchPriority = "low";
           img.decoding = "async";
           thumb.appendChild(img);
           card.appendChild(thumb);
