@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-10-01T19:17:19+08:00",
-  "count": 3,
+  "generated_at": "2026-10-01T19:35:50+08:00",
+  "count": 6,
   "stale_skipped": 0,
   "photos": [
     {
@@ -35,6 +35,39 @@
       "title": "作品 03",
       "place": "",
       "rank": 3
+    },
+    {
+      "slug": "04",
+      "thumb": "assets/photos/04-thumb.webp",
+      "mid": "assets/photos/04-mid.webp",
+      "full": "assets/photos/04-full.webp",
+      "width": 3242,
+      "height": 2160,
+      "title": "作品 04",
+      "place": "",
+      "rank": 4
+    },
+    {
+      "slug": "05",
+      "thumb": "assets/photos/05-thumb.webp",
+      "mid": "assets/photos/05-mid.webp",
+      "full": "assets/photos/05-full.webp",
+      "width": 3840,
+      "height": 2160,
+      "title": "作品 05",
+      "place": "",
+      "rank": 5
+    },
+    {
+      "slug": "06",
+      "thumb": "assets/photos/06-thumb.webp",
+      "mid": "assets/photos/06-mid.webp",
+      "full": "assets/photos/06-full.webp",
+      "width": 3840,
+      "height": 2160,
+      "title": "作品 06",
+      "place": "",
+      "rank": 6
     }
   ]
 }
