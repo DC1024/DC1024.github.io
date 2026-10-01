@@ -1,0 +1,23 @@
+# 统一行尾：仓库内与工作区一律 LF。
+#
+# 起因：index.html 是整个仓库里唯一以 CRLF 提交的文件（其余 .py / .yml / .json / .svg
+# 全都是 LF），而它恰好又是每日 workflow 会用 scripts/inject_seed.py 就地重写的那个。
+# workflow 跑在 Linux runner 上，写出来必然是 LF —— 也就是说第一次自动运行就会产生一个
+# 「整文件重写」的假 diff，把真正的改动埋掉。这里用 eol=lf 一次定死。
+#
+# 顺带解决本地问题：core.autocrlf=true 会把 index.html 检出成 CRLF、git add 时再转回
+# LF，于是每次改动都看到整文件变动的幻影。eol=lf 的优先级高于 autocrlf，不再来回翻。
+#
+# 注意：本文件生效后，首次提交 index.html 会带上一次「仅行尾」的整文件重写，
+# 这是预期内的一次性代价，之后行尾就稳定了。
+* text=auto eol=lf
+
+# 二进制资源不参与任何行尾转换（也免得 git 去猜）
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.webp binary
+*.gif  binary
+*.ico  binary
+*.woff binary
+*.woff2 binary
