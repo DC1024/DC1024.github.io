@@ -303,6 +303,31 @@
   .btn-ghost { background: var(--panel); color: var(--text); }
   .btn-ghost:hover { border-color: var(--border-strong); transform: translateY(-2px); box-shadow: 0 8px 22px rgba(2, 110, 190, 0.14); }
 
+  /* 首屏社交按钮品牌色（GitHub / Bilibili / YouTube / 知乎 / 微博）
+     用属性选择器精确命中，不依赖按钮文字或顺序；
+     图标 svg 用 fill="currentColor"，文字随 color，一处改两处同色。
+     变量：--brand = 默认图标/文字色（亮暗自适应）；--brand-fill = 悬停实底色；
+     --brand-ink = 悬停实底上的文字色。 */
+  .cta-row a {
+    color: var(--brand);
+    border-color: color-mix(in srgb, var(--brand-fill) 42%, transparent);
+    background: color-mix(in srgb, var(--brand-fill) 9%, transparent);
+  }
+  .cta-row a:hover {
+    color: var(--brand-ink);
+    background: var(--brand-fill);
+    border-color: var(--brand-fill);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px color-mix(in srgb, var(--brand-fill) 32%, transparent);
+  }
+  .cta-row a[href*="github.com"]   { --brand:#181717; --brand-fill:#181717; --brand-ink:#ffffff; }
+  .cta-row a[href*="bilibili.com"] { --brand:#FB7299; --brand-fill:#FB7299; --brand-ink:#ffffff; }
+  .cta-row a[href*="youtube.com"]  { --brand:#FF0000; --brand-fill:#FF0000;  --brand-ink:#ffffff; }
+  .cta-row a[href*="zhihu.com"]    { --brand:#0084FF; --brand-fill:#0084FF; --brand-ink:#ffffff; }
+  .cta-row a[href*="weibo.com"]    { --brand:#E6162D; --brand-fill:#E6162D; --brand-ink:#ffffff; }
+  /* GitHub 在暗色背景下黑字不可见：默认文字改为浅灰，悬停仍填黑底白字 */
+  html[data-theme="dark"] .cta-row a[href*="github.com"] { --brand:#e6edf3; }
+
   /* sections */
   section { padding: clamp(48px, 8vh, 80px) 0; }
   /* 上面这条只有类型选择器 (0,0,1)，会被 .container 的 padding 简写 (0,1,0) 整条压掉，
