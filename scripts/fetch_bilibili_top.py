@@ -66,6 +66,9 @@ JSON_PATH = os.path.join(ROOT, "videos.json")
 COVER_MAX_W = 720          # 封面降采样目标宽度（Pillow 可用时生效）
 COVER_QUALITY = 82
 COVER_WEBP_QUALITY = 84    # 封面的 WebP 版本：站点用 <picture> 优先取它，实测小 40%+
+QR_BORDER = 4              # 二维码静默区（模块数）。规范要求 4，取满让 SVG 自带留白、
+                           # 不需要依赖外面面板的 padding 才扫得出来。
+QR_PX = 8                  # 每个模块写成多少用户单位，用来定 SVG 的固有尺寸（见 write_qr）
 
 _SSL = ssl.create_default_context()
 _SSL.check_hostname = False
@@ -347,6 +350,89 @@ def write_cover_webp(cover_rel: str) -> bool:
         return False
 
 
+def qr_rel(bvid: str) -> str:
+    """assets/videos/BVxxx_qr.svg —— 卡片右下角那个分享二维码的文件名。"""
+    return "assets/videos/%s_qr.svg" % bvid
+
+
+def write_qr(bvid: str, url: str) -> str:
+    """
+    生成该视频的分享二维码（内容就是 B 站播放页链接），返回相对路径；失败返回空串。
+
+    为什么放在构建期、而不是在前端现算：
+      站点是单文件、零外部资源的。前端要出二维码只有两条路 —— 内联一个十几 KB 的
+      QR 编码器（污染单文件，还要跟着页面一起下载），或者去调第三方二维码接口
+      （违背「零外部依赖」，而且把访客的浏览行为泄露给第三方）。构建期生成静态 SVG
+      最省：一个 38 字符链接的二维码压出来只有 1 KB 出头，还能跟封面/雪碧图一样
+      被现有 workflow 每天重新生成。
+
+    为什么不用 qrcode 自带的 SVG image factory：
+      它产出的是「黑色模块 + 透明背景」。深色主题下二维码会直接叠在深色面板上，
+      扫描器基本读不出来 —— 二维码必须是深色模块压浅色底。这里自己按矩阵拼 SVG：
+      白底 + 站点的深色墨色，并且把每一行的连续深色模块合并成一段横向游程
+      （M x y h run v1 h-run z），比逐模块一个方框小一大截。
+
+    幂等：文件已存在且不是空壳就直接复用。链接只由 bvid 决定，不会变，
+    所以没必要每天重算、平白多出一堆无意义的 diff。
+    """
+    if not bvid or not url:
+        return ""
+    dest = os.path.join(ROOT, qr_rel(bvid))
+    if os.path.exists(dest) and os.path.getsize(dest) > 256:
+        return qr_rel(bvid)
+    try:
+        import qrcode
+    except Exception:                                            # noqa: BLE001
+        log("  qrcode 不可用，跳过 %s 的二维码" % bvid)
+        return ""
+    try:
+        qr = qrcode.QRCode(
+            error_correction=qrcode.constants.ERROR_CORRECT_M,
+            box_size=1,
+            border=QR_BORDER,
+        )
+        qr.add_data(url)
+        qr.make(fit=True)
+        matrix = qr.get_matrix()
+    except Exception as e:                                       # noqa: BLE001
+        log("  二维码生成失败 %s: %r" % (bvid, e))
+        return ""
+
+    n = len(matrix)
+    runs = []
+    for y, row in enumerate(matrix):
+        x = 0
+        while x < n:
+            if not row[x]:
+                x += 1
+                continue
+            run = 0
+            while x + run < n and row[x + run]:
+                run += 1
+            runs.append("M%d %dh%dv1h-%dz" % (x, y, run, run))
+            x += run
+
+    svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d" '
+        'viewBox="0 0 %d %d" shape-rendering="crispEdges">'
+        '<rect width="%d" height="%d" fill="#ffffff"/>'
+        '<path fill="#070b14" d="%s"/></svg>'
+    ) % (n * QR_PX, n * QR_PX, n, n, n, n, "".join(runs))
+    # width/height 不能省：只有 viewBox 的 SVG 没有「固有尺寸」，浏览器把它当
+    # <img src> 加载后 naturalWidth 会报 0（实测），既拿不到尺寸也容易被误判成加载失败。
+    # 给了之后固有尺寸是 n*QR_PX，站点那边用 CSS 再缩放成 132px 显示。
+
+    try:
+        with open(dest, "w", encoding="utf-8", newline="\n") as f:
+            f.write(svg)
+    except Exception as e:                                       # noqa: BLE001
+        log("  二维码写盘失败 %s: %r" % (bvid, e))
+        return ""
+    log("  写入 %s (%d 模块, %.1f KB)" % (
+        os.path.relpath(dest, ROOT), n, os.path.getsize(dest) / 1024.0))
+    return qr_rel(bvid)
+
+
 def prune_assets(keep: list[str]) -> None:
     """删掉 assets/videos 里已经没人引用的封面/雪碧图，避免仓库无限膨胀。"""
     if not os.path.isdir(ASSET_DIR):
@@ -437,6 +523,10 @@ def build() -> int:
             # 顺带生成 WebP 版本；失败不影响站点（<picture> 会自动回落到 jpg）
             write_cover_webp(cover_local)
 
+        # 卡片右下角的分享二维码。失败就留空串 —— 前端在 qr 为空时不渲染那个按钮，
+        # 所以本机没装 qrcode 也能照常出封面和雪碧图。
+        v["qr"] = write_qr(v.get("bvid") or "", v.get("url") or "")
+
         v["rank"] = i
         v["cover"] = cover_local if got_cover else v["cover_remote"]
         frames_api = int(v.pop("frames", 0) or 0)
@@ -468,6 +558,9 @@ def build() -> int:
     #    否则会被当成「没人引用的文件」删掉 —— 上一版就是这么误删过两张雪碧图的。
     keep = [x for v in ok for x in (v.get("cover"), v.get("sprite"))]
     keep += [cover_webp_rel(c) for c in keep if c and c.endswith(".jpg")]
+    # 二维码同理必须进保留名单：它既不是 cover 也不是 sprite，
+    # 漏掉就会被当成「没人引用的文件」删掉 —— 和当初误删雪碧图是同一个坑。
+    keep += [qr_rel(v["bvid"]) for v in ok if v.get("bvid")]
     prune_assets(keep)
 
     payload = {
@@ -501,7 +594,7 @@ def _same(old, new) -> bool:
     if not isinstance(old, list) or len(old) != len(new):
         return False
     keys = ("bvid", "play", "danmaku", "title", "duration",
-            "preview_frames", "sprite", "cover")
+            "preview_frames", "sprite", "cover", "qr")
     for a, b in zip(old, new):
         for k in keys:
             if a.get(k) != b.get(k):

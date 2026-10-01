@@ -27,10 +27,12 @@ jobs:
         with:
           python-version: "3.12"
 
-      # Pillow 用来把封面压到 720 宽、并生成 WebP 版本。装不上也能跑：
-      # 脚本退回原图，站点那边的 <picture> 也会自动回落到 .jpg。
-      - name: Install Pillow (optional)
-        run: pip install --quiet pillow
+      # Pillow 用来把封面压到 720 宽、并生成 WebP 版本；qrcode 用来生成卡片的分享二维码。
+      # 两个都是可选的：装不上脚本会各自降级（退回原图 / 不产出二维码），站点不会挂 ——
+      # 所以这里失败也只当警告，不 fail 掉整条流水线。
+      - name: Install Pillow + qrcode (optional)
+        continue-on-error: true
+        run: pip install --quiet pillow qrcode
 
       - name: Fetch top videos
         id: fetch
@@ -67,7 +69,7 @@ jobs:
 
           missing, checked = [], 0
           for v in vids:
-              for key in ("cover", "sprite"):
+              for key in ("cover", "sprite", "qr"):
                   p = v.get(key) or ""
                   if not p.startswith("assets/"):
                       continue          # 远端兜底地址，本地没有是正常的
