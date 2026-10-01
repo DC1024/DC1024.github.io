@@ -315,6 +315,84 @@
   }
   .feat .links a:hover { color: var(--accent); }
 
+  /* videos (Bilibili top-N, auto-refreshed) */
+  .vid-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(272px, 1fr)); gap: 20px; }
+  .vid {
+    position: relative;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--panel);
+    overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  }
+  .vid:hover { transform: translateY(-4px); border-color: var(--border-strong); background: var(--panel-hover); box-shadow: 0 14px 34px rgba(2, 110, 190, 0.16); }
+  .vid .stretch { position: absolute; inset: 0; z-index: 1; border-radius: inherit; }
+  .vid .stretch:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .vthumb {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: #05080f;
+  }
+  .vthumb .poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+  /* hover 预览层：B 站官方视频缩略图雪碧图，逐帧刷新 background-position */
+  .vthumb .sprite {
+    position: absolute; inset: 0;
+    opacity: 0;
+    background-repeat: no-repeat;
+    transition: opacity 0.25s ease;
+  }
+  .vid.playing .vthumb .sprite { opacity: 1; }
+  .vthumb .veil {
+    position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(180deg, rgba(0,0,0,0.34) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0) 60%, rgba(0,0,0,0.58) 100%);
+  }
+  .vrank {
+    position: absolute; top: 10px; left: 10px; z-index: 2;
+    font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.6px;
+    padding: 3px 9px; border-radius: 6px; color: #fff;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+  }
+  .vdur {
+    position: absolute; right: 10px; bottom: 10px; z-index: 2;
+    font-family: var(--mono); font-size: 11.5px; color: #fff;
+    padding: 2px 7px; border-radius: 5px;
+    background: rgba(0, 0, 0, 0.62);
+    -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  }
+  .vhint {
+    position: absolute; left: 10px; bottom: 10px; z-index: 2;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11.5px; color: #fff;
+    padding: 2px 8px; border-radius: 5px;
+    background: rgba(0, 0, 0, 0.58);
+    -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+    transition: opacity 0.25s;
+  }
+  .vhint .tri { width: 0; height: 0; border-left: 6px solid #fff; border-top: 4px solid transparent; border-bottom: 4px solid transparent; }
+  .vid.playing .vhint { opacity: 0; }
+  .vmeta { padding: 15px 17px 17px; }
+  .vmeta h3 {
+    font-size: 15.5px; font-weight: 650; line-height: 1.55; margin: 0 0 10px;
+    min-height: 48px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .vstats { display: flex; align-items: center; gap: 15px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .vstats span { display: inline-flex; align-items: center; gap: 5px; }
+  .vstats svg { width: 13px; height: 13px; opacity: 0.85; }
+  .sec-note {
+    margin-top: 18px;
+    font-family: var(--mono); font-size: 12px; color: var(--faint);
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .sec-note .live {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--green); box-shadow: 0 0 8px var(--green);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
   /* footer */
   footer {
     border-top: 1px solid var(--border);
@@ -345,6 +423,7 @@
     <div class="brand"><span class="dot"></span><span>DC</span></div>
     <div class="nav-links">
       <a href="#projects">项目</a>
+      <a href="#videos">视频</a>
       <button class="theme-toggle" id="themeToggle" type="button" aria-label="切换日间/夜间主题" title="切换主题">
         <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
         <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -474,6 +553,14 @@
     </div>
   </section>
 
+  <section id="videos" class="container reveal" hidden>
+    <div class="sec-head">
+      <span class="idx">02</span><h2>我的视频</h2><span class="line"></span>
+    </div>
+    <div class="vid-grid" id="videoGrid"></div>
+    <p class="sec-note" id="videoNote"></p>
+  </section>
+
   <footer class="container">
     <p>© <span id="year"></span> DC · 用 <span class="heart">♥</span> 与开源工具搭建 · <a href="https://github.com/DC1024" target="_blank" rel="noopener">GitHub</a></p>
   </footer>
@@ -499,6 +586,186 @@
       entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
     }, { threshold: 0.12 });
     document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+
+    /* ---------- 我的视频：读取 videos.json 渲染卡片 ----------
+       数据由 GitHub Actions 每 24 小时重新抓取一次（scripts/fetch_bilibili_top.py）。
+       卡片 hover 时不联网：用的是随仓库一起提交的 B 站官方缩略图雪碧图，
+       靠 background-position 逐帧推进，所以在国内网络下也稳。            */
+    (function () {
+      var sec = document.getElementById("videos");
+      var grid = document.getElementById("videoGrid");
+      var note = document.getElementById("videoNote");
+      if (!sec || !grid || !window.fetch) return;
+
+      var STEP = 170;            // 每帧停留毫秒
+      var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      function fmtCount(n) {
+        n = Number(n) || 0;
+        if (n >= 1e8) return (n / 1e8).toFixed(1).replace(/\.0$/, "") + "亿";
+        if (n >= 1e4) return (n / 1e4).toFixed(1).replace(/\.0$/, "") + "万";
+        return String(n);
+      }
+      function fmtDur(s) {
+        s = Math.max(0, Math.round(Number(s) || 0));
+        var h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), q = s % 60;
+        var p = function (v) { return (v < 10 ? "0" : "") + v; };
+        return h ? h + ":" + p(m) + ":" + p(q) : p(m) + ":" + p(q);
+      }
+      function fmtTime(iso) {
+        var d = new Date(iso);
+        if (isNaN(d.getTime())) return "";
+        var p = function (v) { return (v < 10 ? "0" : "") + v; };
+        return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) +
+               " " + p(d.getHours()) + ":" + p(d.getMinutes());
+      }
+      function svg(path, vb) {
+        var s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        s.setAttribute("viewBox", vb || "0 0 24 24");
+        s.setAttribute("fill", "currentColor");
+        s.setAttribute("aria-hidden", "true");
+        var p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        p.setAttribute("d", path);
+        s.appendChild(p);
+        return s;
+      }
+      var IC_PLAY = "M5.5 3.5v17l14-8.5-14-8.5z";
+      var IC_DM = "M12 2.5c-5.24 0-9.5 3.36-9.5 7.5 0 2.35 1.29 4.46 3.32 5.86-.13 1.06-.55 2.44-1.62 3.64a.5.5 0 0 0 .42.82c2.4-.24 4.13-1.13 5.2-1.87.7.13 1.43.2 2.18.2 5.24 0 9.5-3.36 9.5-7.5S17.24 2.5 12 2.5Z";
+
+      function buildCard(v, idx) {
+        var card = document.createElement("article");
+        card.className = "vid";
+
+        var a = document.createElement("a");
+        a.className = "stretch";
+        a.href = v.url;
+        a.target = "_blank";
+        a.rel = "noopener";
+        a.setAttribute("aria-label", "在 B 站观看：" + v.title);
+        card.appendChild(a);
+
+        var thumb = document.createElement("div");
+        thumb.className = "vthumb";
+
+        var img = document.createElement("img");
+        img.className = "poster";
+        img.src = v.cover;
+        img.alt = v.title;
+        img.loading = "lazy";
+        thumb.appendChild(img);
+
+        var frames = Number(v.preview_frames) || 0;
+        var cols = Number(v.sprite_cols) || 10;
+        var rows = Number(v.sprite_rows) || 10;
+        var spriteEl = null;
+        if (v.sprite && frames > 1) {
+          spriteEl = document.createElement("div");
+          spriteEl.className = "sprite";
+          spriteEl.style.backgroundImage = "url('" + v.sprite + "')";
+          thumb.appendChild(spriteEl);
+        }
+        thumb.appendChild(Object.assign(document.createElement("div"), { className: "veil" }));
+
+        var rank = document.createElement("span");
+        rank.className = "vrank";
+        rank.textContent = "TOP " + (v.rank || idx + 1);
+        thumb.appendChild(rank);
+
+        var dur = document.createElement("span");
+        dur.className = "vdur";
+        dur.textContent = fmtDur(v.duration);
+        thumb.appendChild(dur);
+
+        if (spriteEl) {
+          var hint = document.createElement("span");
+          hint.className = "vhint";
+          hint.appendChild(Object.assign(document.createElement("i"), { className: "tri" }));
+          hint.appendChild(document.createTextNode("悬停预览"));
+          thumb.appendChild(hint);
+        }
+        card.appendChild(thumb);
+
+        var meta = document.createElement("div");
+        meta.className = "vmeta";
+        var h3 = document.createElement("h3");
+        h3.textContent = v.title;
+        meta.appendChild(h3);
+        var stats = document.createElement("div");
+        stats.className = "vstats";
+        var s1 = document.createElement("span");
+        s1.appendChild(svg(IC_PLAY));
+        s1.appendChild(document.createTextNode(fmtCount(v.play) + " 播放"));
+        stats.appendChild(s1);
+        var s2 = document.createElement("span");
+        s2.appendChild(svg(IC_DM));
+        s2.appendChild(document.createTextNode(fmtCount(v.danmaku) + " 弹幕"));
+        stats.appendChild(s2);
+        meta.appendChild(stats);
+        card.appendChild(meta);
+
+        /* hover 预览：按 10 列网格逐帧推进 background-position */
+        if (spriteEl && !reduce) {
+          var timer = null, frame = 0, resetT = null;
+          var paint = function () {
+            var w = thumb.clientWidth, h = thumb.clientHeight;
+            if (!w || !h) return;
+            spriteEl.style.backgroundSize = (cols * w) + "px " + (rows * h) + "px";
+            spriteEl.style.backgroundPosition =
+              (-(frame % cols) * w) + "px " + (-Math.floor(frame / cols) * h) + "px";
+          };
+          var stop = function () {
+            if (timer) { clearInterval(timer); timer = null; }
+            card.classList.remove("playing");
+            // 淡出期间先冻在最后一帧（跳回第 0 帧会闪一下黑场），
+            // 等 0.25s 透明度过渡走完再在不可见状态下复位，保持状态干净。
+            if (resetT) clearTimeout(resetT);
+            resetT = setTimeout(function () {
+              if (timer) return;
+              frame = 0;
+              paint();
+            }, 280);
+          };
+          card.addEventListener("mouseenter", function () {
+            card.classList.add("playing");
+            frame = 0;
+            paint();
+            timer = setInterval(function () { frame = (frame + 1) % frames; paint(); }, STEP);
+          });
+          card.addEventListener("mouseleave", stop);
+          window.addEventListener("resize", function () { if (timer) paint(); }, { passive: true });
+          window.addEventListener("blur", stop);
+        }
+        return card;
+      }
+
+      fetch("videos.json", { cache: "no-cache" })
+        .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status)); })
+        .then(function (data) {
+          var list = (data && data.videos) || [];
+          if (!list.length) return;
+          list.forEach(function (v, i) { grid.appendChild(buildCard(v, i)); });
+          if (note) {
+            var dot = document.createElement("span");
+            dot.className = "live";
+            note.appendChild(dot);
+            note.appendChild(document.createTextNode(
+              "按播放量实时排名 TOP " + list.length + "，每 24 小时自动重抓替换" +
+              (data.generated_at ? " · 上次更新 " + fmtTime(data.generated_at) : "") + " · "));
+            var more = document.createElement("a");
+            more.href = data.space || "https://space.bilibili.com/1970862788";
+            more.target = "_blank";
+            more.rel = "noopener";
+            more.textContent = "去 B 站看全部作品 →";
+            more.style.color = "inherit";
+            more.style.textDecoration = "underline";
+            more.style.textUnderlineOffset = "3px";
+            note.appendChild(more);
+          }
+          sec.hidden = false;
+          sec.classList.add("in");     // 元素此前是 hidden，IntersectionObserver 不会触发
+        })
+        .catch(function () { /* 拿不到数据就整块不显示，不留空壳 */ });
+    })();
   </script>
 </body>
 </html>

@@ -1,0 +1,85 @@
+name: Update Bilibili top videos
+
+# 每 24 小时重抓一次 UP 主播放量最高的视频，更新 videos.json 与本地素材。
+# 站点（index.html）在浏览器里 fetch videos.json 渲染卡片，
+# 所以这里只要提交数据文件，网页就自动跟着换。
+on:
+  schedule:
+    # 21:10 UTC = 次日 05:10 北京时间，避开整点高峰
+    - cron: "10 21 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-videos
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Pillow 只用来把封面压到 720 宽（省流量）。装不上也能跑，脚本会自动退回原图。
+      - name: Install Pillow (optional)
+        run: pip install --quiet pillow
+
+      - name: Fetch top videos
+        id: fetch
+        continue-on-error: true
+        env:
+          BILI_MID: "1970862788"
+          BILI_TOP_N: "3"
+          # 别让 runner 上可能存在的代理变量影响对 B 站的直连
+          http_proxy: ""
+          https_proxy: ""
+          HTTP_PROXY: ""
+          HTTPS_PROXY: ""
+          all_proxy: ""
+          ALL_PROXY: ""
+        run: python scripts/fetch_bilibili_top.py
+
+      - name: Warn when fetch failed
+        if: steps.fetch.outcome == 'failure'
+        run: |
+          echo "::warning::B 站抓取失败，本次保留上一版 videos.json（站点不会挂，只是数据没刷新）"
+
+      - name: Commit changes
+        run: |
+          set -euo pipefail
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "没有变化，跳过提交"
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A videos.json assets/videos
+          git diff --cached --stat
+          git commit -m "chore(videos): refresh Bilibili top videos [skip ci]"
+          git push
+
+      - name: Summary
+        if: always()
+        run: |
+          set -euo pipefail
+          [ -f videos.json ] || exit 0
+          python - >> "$GITHUB_STEP_SUMMARY" <<'PY'
+          import json
+          d = json.load(open("videos.json", encoding="utf-8"))
+          print("## B 站 TOP 视频数据\n")
+          print("| # | 播放量 | 标题 | 视频 |")
+          print("| - | -----: | ---- | ---- |")
+          for v in d.get("videos", []):
+              print("| %s | %s | %s | [%s](%s) |" % (
+                  v.get("rank"), format(v.get("play", 0), ","),
+                  v.get("title", ""), v.get("bvid", ""), v.get("url", "")))
+          print("\n生成时间：`%s`" % d.get("generated_at", "?"))
+          PY
