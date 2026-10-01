@@ -6,6 +6,9 @@
 <title>DC · 个人主页</title>
 <meta name="description" content="DC 的个人主页 —— 维护 MirrorPilot 与 iso-hub 等开源项目。" />
 <script>
+  // 入场动效的「初始隐藏」只在 JS 可用时生效 —— 否则脚本一旦没跑起来，
+  // 整页内容会停在 opacity:0 上变成白板。
+  document.documentElement.classList.add("js");
   (function () {
     try {
       var t = localStorage.getItem("theme");
@@ -35,9 +38,15 @@
     --cyan: #22d3ee;
     --green: #34d399;
     --radius: 16px;
+    /* 整屏分页用。--vh 兜底 100vh，支持 svh 时优先用它 —— 移动端地址栏收起会让
+       dvh 变化并触发重排，分屏高度跟着跳，所以这里不用 dvh。 */
+    --vh: 100vh;
+    /* 固定导航的高度，JS 实测后会覆盖这个值 */
+    --nav-h: 70px;
     --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Consolas, monospace;
     --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", Roboto, Helvetica, Arial, sans-serif;
   }
+  @supports (height: 100svh) { :root { --vh: 100svh; } }
   html[data-theme="light"] {
     color-scheme: light;
     --bg: #f3f7fd;
@@ -104,10 +113,13 @@
 
   a { color: inherit; text-decoration: none; }
 
-  /* nav */
+  /* nav —— 用 fixed 而不是 sticky：sticky 会占掉布局高度，把整屏分页往下顶，
+     导致首屏能看到的范围多出下一屏的一截。 */
   .nav {
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
+    right: 0;
     z-index: 50;
     display: flex;
     align-items: center;
@@ -186,19 +198,24 @@
 
   /* hero */
   .hero {
-    padding: clamp(70px, 12vh, 130px) 0 clamp(50px, 8vh, 90px);
+    /* 上下留白交给分屏居中处理，这里只留「hero 与 01 之间」的间距。
+       写成三值简写而不是只给上下：左右必须一起给，否则会盖掉 .container 的横向内边距
+       （同优先级、后定义者胜），窄屏下标题会贴边。 */
+    padding: 0 clamp(20px, 5vw, 64px) clamp(18px, 3vh, 40px);
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
   }
   .avatar {
-    width: 124px; height: 124px;
+    /* 跟着视口高度收缩：窗口不高的笔记本上，头像小一点才能把「介绍 + 01」压进一屏 */
+    width: clamp(84px, 11.5vh, 124px);
+    height: clamp(84px, 11.5vh, 124px);
     border-radius: 50%;
     box-shadow: 0 0 0 6px rgba(56, 189, 248, 0.12), 0 0 40px rgba(56, 189, 248, 0.35);
     position: relative;
     overflow: hidden;
-    margin-bottom: 26px;
+    margin-bottom: clamp(16px, 2.6vh, 26px);
   }
   html[data-theme="light"] .avatar {
     box-shadow: 0 0 0 6px rgba(2, 132, 199, 0.12), 0 0 40px rgba(2, 132, 199, 0.25);
@@ -221,7 +238,8 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
   .hero h1 {
-    font-size: clamp(34px, 6vw, 56px);
+    /* 同宽高双约束：宽屏用 6vw 就够，但窗口不高时 6vw 依然偏大，再叠一层 6.6vh */
+    font-size: clamp(30px, min(6vw, 6.6vh), 56px);
     font-weight: 800;
     letter-spacing: -0.5px;
     line-height: 1.15;
@@ -233,7 +251,7 @@
     -webkit-text-fill-color: transparent;
   }
 
-  .cta-row { margin-top: 34px; display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+  .cta-row { margin-top: clamp(20px, 4vh, 34px); display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
   .btn {
     display: inline-flex; align-items: center; gap: 9px;
     padding: 12px 22px;
@@ -253,7 +271,7 @@
      实测 section.container 的上下内边距是 0 —— 单个板块时看不出来，
      两个板块相邻（我的视频 / 核心项目）就会贴在一起。这里显式补回来。 */
   section.container { padding-top: clamp(48px, 8vh, 80px); padding-bottom: clamp(48px, 8vh, 80px); }
-  .sec-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 34px; }
+  .sec-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: clamp(20px, 3.2vh, 34px); }
   .sec-head h2 {
     font-size: clamp(24px, 4vw, 32px);
     font-weight: 700;
@@ -277,7 +295,8 @@
     border: 1px solid var(--border);
     border-radius: var(--radius);
     background: var(--panel);
-    padding: 26px;
+    /* 随视口高度收缩：6 张卡两行，窗口矮一点就要靠这点边距把第二屏压进一屏 */
+    padding: clamp(18px, 2.4vh, 26px);
     overflow: hidden;
     transition: transform 0.2s, border-color 0.2s, background 0.2s, box-shadow 0.2s;
   }
@@ -299,9 +318,9 @@
     font-family: var(--mono); font-size: 12px; color: var(--accent);
     letter-spacing: 1px; text-transform: uppercase;
   }
-  .feat h3 { font-size: 22px; margin: 8px 0 12px; font-weight: 700; }
+  .feat h3 { font-size: clamp(19px, 1.5vh, 22px); margin: clamp(6px, 0.9vh, 8px) 0 clamp(8px, 1.4vh, 12px); font-weight: 700; }
   .feat p { color: var(--muted); font-size: 14.5px; }
-  .badges { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 20px; }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; margin: clamp(10px, 1.6vh, 16px) 0 clamp(12px, 2vh, 20px); }
   .badge {
     font-family: var(--mono); font-size: 11.5px;
     padding: 4px 10px; border-radius: 6px;
@@ -397,21 +416,90 @@
   }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 
-  /* footer */
+  /* footer
+     页脚本身带 .container，它的 padding 简写（0,1,0）会整条压掉 footer 类型选择器的
+     同属性（0,0,1）—— 实测竖向内边距是 0，边框线紧贴着文字。用 footer.container 补回来。
+     它现在待在第二屏里，底部留白交给分屏自己的 padding-bottom。 */
   footer {
     border-top: 1px solid var(--border);
-    padding: 36px 0 48px;
     text-align: center;
     color: var(--faint);
     font-size: 13px;
   }
+  footer.container { padding-top: clamp(14px, 2.2vh, 26px); padding-bottom: 0; }
   footer a { color: var(--muted); }
   footer a:hover { color: var(--accent); }
   footer .heart { color: #f472b6; }
 
-  /* reveal */
-  .reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.6s ease, transform 0.6s ease; }
-  .reveal.in { opacity: 1; transform: none; }
+  /* ---------- 整屏分页：01 / 02 靠滚动切换 ----------
+     每块分屏至少占一屏高度，内容在其中垂直居中。因此打开页面时视口里只有
+     「介绍 + 01」，02 的起点正好落在折线（= 一屏高度）以下，不会再露头。
+     内边距必须写长写法：简写会连 .container 的横向内边距一起压掉。 */
+  .pane {
+    position: relative;
+    min-height: var(--vh);
+    display: flex;
+    flex-direction: column;
+    padding-top: var(--nav-h);          /* 让开固定导航，内容不会被它压住 */
+    padding-bottom: clamp(14px, 2.2vh, 40px);
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+  /* 末屏按「底边」吸附：万一它比视口高出一点点，多出来的那几像素会落在它自己的
+     顶部内边距里（而不是像 start 那样把页脚尾部永久卡在屏外滚不到）。 */
+  .pane:last-child { scroll-snap-align: end; }
+  .pane-inner { flex: 1; display: flex; flex-direction: column; width: 100%; }
+  /* auto 外边距 = 有富余就居中、装不下就顶到上沿（不会像 justify-content:center
+     那样把超出的一截顶到导航底下看不见） */
+  .pane-body { margin-block: auto; width: 100%; }
+  /* 分屏内的板块不再需要自己的上下留白，垂直位置由分屏居中决定 */
+  .pane #videos, .pane #projects { padding-top: 0; padding-bottom: 0; }
+  /* 吸附默认不开：只有 JS 判定「每一屏都装得进视口」时才加 .snap。
+     mandatory 一旦碰到比视口高的分屏，会把超出的那一截永久卡在屏外，
+     读不到也滚不出来（矮屏笔记本 / 手机就是这样）。 */
+  html.snap { scroll-snap-type: y mandatory; }
+
+  /* 第一屏底部的滚动提示；开始滚动后收起 */
+  .scroll-hint {
+    position: absolute; left: 50%; bottom: clamp(8px, 1.4vh, 20px);
+    transform: translateX(-50%);
+    display: inline-flex; flex-direction: column; align-items: center; gap: 3px;
+    font-family: var(--mono); font-size: 11px; letter-spacing: 1.5px;
+    color: var(--faint);
+    transition: opacity 0.35s, visibility 0.35s;
+  }
+  .scroll-hint svg { width: 17px; height: 17px; animation: bob 1.9s ease-in-out infinite; }
+  @keyframes bob { 0%, 100% { transform: translateY(0); opacity: 0.5; } 50% { transform: translateY(4px); opacity: 1; } }
+  html.scrolled .scroll-hint { opacity: 0; visibility: hidden; }
+
+  /* 分屏切换动效：进场时内容自下而上淡入；离开再回来会重播（靠 JS 增删 .in） */
+  html.js .pane .sec-head,
+  html.js .pane .sec-note {
+    opacity: 0; transform: translateY(24px);
+    transition: opacity 0.55s cubic-bezier(0.22, 0.61, 0.36, 1), transform 0.55s cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+  html.js .pane .sec-note { transition-delay: 0.18s; }
+  html.js .pane.in .sec-head,
+  html.js .pane.in .sec-note { opacity: 1; transform: none; }
+  /* 卡片逐个错开进场。fill 用 backwards 而不是 both：动画结束后不留终态，
+     否则会盖住 :hover 的 translateY(-4px) 悬浮效果。 */
+  @keyframes cardIn { from { opacity: 0; transform: translateY(20px); } }
+  html.js .pane.in .vid,
+  html.js .pane.in .feat { animation: cardIn 0.5s cubic-bezier(0.22, 0.61, 0.36, 1) backwards; }
+  html.js .pane.in .feat:nth-child(2) { animation-delay: 60ms; }
+  html.js .pane.in .feat:nth-child(3) { animation-delay: 120ms; }
+  html.js .pane.in .feat:nth-child(4) { animation-delay: 180ms; }
+  html.js .pane.in .feat:nth-child(5) { animation-delay: 240ms; }
+  html.js .pane.in .feat:nth-child(6) { animation-delay: 300ms; }
+
+  @media (prefers-reduced-motion: reduce) {
+    html.snap { scroll-snap-type: none; }
+    html.js .pane .sec-head, html.js .pane .sec-note { transition: none; }
+    html.js .pane.in .vid, html.js .pane.in .feat { animation: none; }
+    .scroll-hint svg { animation: none; }
+  }
+  /* 矮窗口里没有多余空间放提示，且它可能压到内容上 */
+  @media (max-height: 820px) { .scroll-hint { display: none; } }
 
   @media (max-width: 760px) {
     .feat-grid { grid-template-columns: 1fr; }
@@ -435,6 +523,11 @@
     </div>
   </nav>
 
+  <main>
+  <!-- 第一屏 = 介绍 + 01 我的视频；第二屏 = 02 核心项目 + 页脚。
+       两块 .pane 各占一屏高度，由 scroll-snap 吸附切换（CSS / JS 里都有说明）。 -->
+  <section class="pane" id="pane-videos" aria-label="介绍与我的视频">
+  <div class="pane-inner"><div class="pane-body">
   <header class="hero container">
     <div class="avatar"><img src="avatar.jpg" alt="DC1024" /></div>
     <h1>你好，我是 <span class="grad">DC</span></h1>
@@ -458,7 +551,7 @@
     </div>
   </header>
 
-  <section id="videos" class="container reveal" hidden>
+  <section id="videos" class="container" hidden>
     <div class="sec-head">
       <span class="idx">01</span><h2>我的视频</h2><span class="line"></span>
     </div>
@@ -466,7 +559,16 @@
     <p class="sec-note" id="videoNote"></p>
   </section>
 
-  <section id="projects" class="container reveal">
+  </div></div>
+  <div class="scroll-hint" aria-hidden="true">
+    <span>向下滚动</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+  </div>
+  </section>
+
+  <section class="pane" id="pane-projects" aria-label="核心项目">
+  <div class="pane-inner"><div class="pane-body">
+  <section id="projects" class="container">
     <div class="sec-head">
       <span class="idx">02</span><h2>核心项目</h2><span class="line"></span>
     </div>
@@ -565,18 +667,27 @@
     </div>
   </section>
 
+  </div></div>
   <footer class="container">
     <p>© <span id="year"></span> DC · 用 <span class="heart">♥</span> 与开源工具搭建 · <a href="https://github.com/DC1024" target="_blank" rel="noopener">GitHub</a></p>
   </footer>
+  </section>
+
+  </main>
 
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();
     const nav = document.getElementById("nav");
-    const onScroll = () => nav.classList.toggle("scrolled", window.scrollY > 12);
+    const root = document.documentElement;
+    /* 滚动提示的收起状态挂在 html 上（hint 在 DOM 里、状态在根元素上更好写选择器） */
+    const onScroll = () => {
+      const y = window.scrollY;
+      nav.classList.toggle("scrolled", y > 12);
+      root.classList.toggle("scrolled", y > 12);
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
 
-    const root = document.documentElement;
     const toggle = document.getElementById("themeToggle");
     if (toggle) {
       toggle.addEventListener("click", () => {
@@ -586,10 +697,77 @@
       });
     }
 
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
-    }, { threshold: 0.12 });
-    document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+    /* ---------- 整屏分页：01 与 02 靠滚动切换 ----------
+       两块 .pane 各占一屏（min-height: --vh），内容在屏内垂直居中，
+       所以打开页面时「介绍 + 01」正好占满第一屏，02 起点落在折线以下。 */
+    const pageSync = (function () {
+      const panes = Array.prototype.slice.call(document.querySelectorAll(".pane"));
+      if (!panes.length) return { relayout: function () {} };
+
+      // 固定导航会压住分屏顶部，把实测高度交给 CSS，别在样式里写死。
+      function syncNavH() {
+        const h = Math.round(nav.getBoundingClientRect().height);
+        if (h > 0) root.style.setProperty("--nav-h", h + "px");
+      }
+
+      function syncSnap() {
+        // 只有「每一屏都装得进视口」才开吸附。mandatory 碰到比视口高的分屏时，
+        // 会把超出的那一截永久卡在屏外 —— 读不到，也滚不出来。所以只要有一屏装不下，
+        // 就退回普通滚动（此时首屏仍然是满屏，只是没有吸附切换）。
+        // 末屏因为按底边吸附（见 CSS），容差可以放宽到几像素用来抹平取整误差。
+        const vh = window.innerHeight;
+        const last = panes.length - 1;
+        let fits = true;
+        for (let i = 0; i < panes.length; i++) {
+          const over = panes[i].scrollHeight - vh;
+          if (over > (i === last ? 6 : 2)) { fits = false; break; }
+        }
+        root.classList.toggle("snap", fits);
+      }
+
+      function updateActive() {
+        // 判定「谁占着视口」：看视口 35% 高度处那条线落在哪块分屏里。
+        // 取 35% 而不是 50%，是为了让新分屏露出大半就切过去 —— 此时上一屏的
+        // 内容已经退出画面，不会出现「一边退场一边还在露脸」的尴尬。
+        const line = window.innerHeight * 0.35;
+        let hit = null, near = null, nearD = Infinity;
+        for (let i = 0; i < panes.length; i++) {
+          const r = panes[i].getBoundingClientRect();
+          if (r.top <= line && r.bottom > line) { hit = panes[i]; break; }
+          const d = Math.abs(r.top - line);
+          if (d < nearD) { nearD = d; near = panes[i]; }
+        }
+        const active = hit || near;
+        panes.forEach((p) => p.classList.toggle("in", p === active));
+      }
+
+      let raf = 0;
+      function onPaneScroll() {
+        if (raf) return;
+        raf = requestAnimationFrame(() => { raf = 0; updateActive(); });
+      }
+      function relayout() { syncNavH(); syncSnap(); updateActive(); }
+
+      window.addEventListener("scroll", onPaneScroll, { passive: true });
+      window.addEventListener("resize", relayout, { passive: true });
+      window.addEventListener("orientationchange", () => setTimeout(relayout, 220));
+      window.addEventListener("load", relayout);
+
+      // 导航锚点直接落到分屏顶部：走原生锚点会先滚到板块、再被吸附拉回去，视觉上抖一下。
+      Array.prototype.forEach.call(document.querySelectorAll('.nav-links a[href^="#"]'), (a) => {
+        a.addEventListener("click", (ev) => {
+          const t = document.querySelector(a.getAttribute("href"));
+          const pane = t && t.closest ? t.closest(".pane") : null;
+          if (!pane) return;
+          ev.preventDefault();
+          pane.scrollIntoView({ behavior: "smooth", block: "start" });
+          try { history.replaceState(null, "", a.getAttribute("href")); } catch (e) {}
+        });
+      });
+
+      relayout();
+      return { relayout: relayout };
+    })();
 
     /* ---------- 我的视频：读取 videos.json 渲染卡片 ----------
        数据由 GitHub Actions 每 24 小时重新抓取一次（scripts/fetch_bilibili_top.py）。
@@ -739,6 +917,7 @@
           window.addEventListener("resize", function () { if (timer) paint(); }, { passive: true });
           window.addEventListener("blur", stop);
         }
+        card.style.animationDelay = (idx * 90) + "ms";   // 进场动效逐张错开
         return card;
       }
 
@@ -766,13 +945,14 @@
             note.appendChild(more);
           }
           sec.hidden = false;
-          sec.classList.add("in");     // 元素此前是 hidden，IntersectionObserver 不会触发
+          pageSync.relayout();   // 01 变高了，重新判定这一屏还装不装得下（决定要不要吸附）
         })
         .catch(function () {
           /* 拿不到数据就整块不显示，不留空壳；同时把核心项目提回 01，
              免得页面上出现一个没有 01 的 02。 */
           var idx = document.querySelector("#projects .idx");
           if (idx) idx.textContent = "01";
+          pageSync.relayout();
         });
     })();
   </script>
