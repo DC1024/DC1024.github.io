@@ -39,7 +39,9 @@
     try {
       var t = localStorage.getItem("theme");
       if (t !== "light" && t !== "dark") {
-        t = (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) ? "light" : "dark";
+        // 无用户偏好时按访问的本地时间决定：早 8 点至晚 18 点前为日间模式，其余（18:00–07:59）为夜间模式
+        var h = new Date().getHours();
+        t = (h >= 8 && h < 18) ? "light" : "dark";
       }
       document.documentElement.setAttribute("data-theme", t);
     } catch (e) {
