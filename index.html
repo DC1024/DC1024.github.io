@@ -1,12 +1,26 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="dark">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>DC · 个人主页</title>
 <meta name="description" content="DC 的个人主页 —— 维护 MirrorPilot 与 iso-hub 等开源项目。" />
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem("theme");
+      if (t !== "light" && t !== "dark") {
+        t = (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) ? "light" : "dark";
+      }
+      document.documentElement.setAttribute("data-theme", t);
+    } catch (e) {
+      document.documentElement.setAttribute("data-theme", "dark");
+    }
+  })();
+</script>
 <style>
   :root {
+    color-scheme: dark;
     --bg: #070b14;
     --bg-2: #0b1120;
     --panel: rgba(255, 255, 255, 0.045);
@@ -24,6 +38,22 @@
     --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Consolas, monospace;
     --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", Roboto, Helvetica, Arial, sans-serif;
   }
+  html[data-theme="light"] {
+    color-scheme: light;
+    --bg: #f3f7fd;
+    --bg-2: #e6eef9;
+    --panel: rgba(255, 255, 255, 0.78);
+    --panel-hover: #ffffff;
+    --border: rgba(20, 45, 90, 0.12);
+    --border-strong: rgba(2, 110, 190, 0.35);
+    --text: #0d1b2e;
+    --muted: #4a5b74;
+    --faint: #7c8aa3;
+    --accent: #0284c7;
+    --accent-2: #4f46e5;
+    --cyan: #0891b2;
+    --green: #059669;
+  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
   body {
@@ -34,6 +64,7 @@
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
     position: relative;
+    transition: background 0.3s ease, color 0.3s ease;
   }
   /* animated backdrop */
   .backdrop {
@@ -45,6 +76,7 @@
       radial-gradient(800px 600px at 100% 0%, rgba(129, 140, 248, 0.14), transparent 55%),
       radial-gradient(700px 700px at 50% 120%, rgba(34, 211, 238, 0.10), transparent 60%),
       linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+    transition: background 0.3s ease;
   }
   .grid-overlay {
     position: fixed;
@@ -56,6 +88,18 @@
     background-size: 46px 46px;
     mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, #000 40%, transparent 100%);
     -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, #000 40%, transparent 100%);
+  }
+  html[data-theme="light"] .backdrop {
+    background:
+      radial-gradient(900px 600px at 12% -5%, rgba(56, 189, 248, 0.20), transparent 60%),
+      radial-gradient(800px 600px at 100% 0%, rgba(129, 140, 248, 0.18), transparent 55%),
+      radial-gradient(700px 700px at 50% 120%, rgba(34, 211, 238, 0.14), transparent 60%),
+      linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+  }
+  html[data-theme="light"] .grid-overlay {
+    background-image:
+      linear-gradient(rgba(20, 45, 90, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(20, 45, 90, 0.05) 1px, transparent 1px);
   }
 
   a { color: inherit; text-decoration: none; }
@@ -78,6 +122,7 @@
     border-bottom: 1px solid var(--border);
     background: rgba(7, 11, 20, 0.72);
   }
+  html[data-theme="light"] .nav.scrolled { background: rgba(243, 247, 253, 0.85); }
   .brand {
     font-family: var(--mono);
     font-weight: 700;
@@ -92,7 +137,7 @@
     background: var(--accent);
     box-shadow: 0 0 12px var(--accent);
   }
-  .nav-links { display: flex; align-items: center; gap: 26px; }
+  .nav-links { display: flex; align-items: center; gap: 16px; }
   .nav-links a {
     color: var(--muted);
     font-size: 14px;
@@ -118,6 +163,24 @@
     transition: border-color 0.2s, background 0.2s;
   }
   .nav-gh:hover { border-color: var(--border-strong); background: var(--panel); }
+  .nav-gh svg { width: 16px; height: 16px; }
+
+  /* theme toggle */
+  .theme-toggle {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 38px; height: 38px; flex: none;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s;
+  }
+  .theme-toggle:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+  .theme-toggle svg { width: 18px; height: 18px; }
+  .theme-toggle .ic-moon { display: none; }
+  html[data-theme="light"] .theme-toggle .ic-sun { display: none; }
+  html[data-theme="light"] .theme-toggle .ic-moon { display: block; }
 
   .container { max-width: 1040px; margin: 0 auto; padding: 0 clamp(20px, 5vw, 64px); }
 
@@ -136,6 +199,9 @@
     position: relative;
     overflow: hidden;
     margin-bottom: 26px;
+  }
+  html[data-theme="light"] .avatar {
+    box-shadow: 0 0 0 6px rgba(2, 132, 199, 0.12), 0 0 40px rgba(2, 132, 199, 0.25);
   }
   .avatar img {
     width: 100%; height: 100%;
@@ -169,23 +235,17 @@
 
   .cta-row { margin-top: 34px; display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
   .btn {
-    display: inline-flex; align-items: center; gap: 8px;
+    display: inline-flex; align-items: center; gap: 9px;
     padding: 12px 22px;
     border-radius: 12px;
     font-size: 14px;
     font-weight: 600;
-    transition: transform 0.15s, box-shadow 0.2s, border-color 0.2s;
+    transition: transform 0.15s, box-shadow 0.2s, border-color 0.2s, background 0.2s, color 0.3s;
     border: 1px solid var(--border);
   }
-  .btn-primary {
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    color: #061018;
-    border: none;
-    box-shadow: 0 8px 24px rgba(56, 189, 248, 0.28);
-  }
-  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(56, 189, 248, 0.4); }
+  .btn svg { width: 17px; height: 17px; flex: none; }
   .btn-ghost { background: var(--panel); color: var(--text); }
-  .btn-ghost:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+  .btn-ghost:hover { border-color: var(--border-strong); transform: translateY(-2px); box-shadow: 0 8px 22px rgba(2, 110, 190, 0.14); }
 
   /* sections */
   section { padding: clamp(48px, 8vh, 80px) 0; }
@@ -239,6 +299,7 @@
     color: var(--muted);
     background: rgba(255,255,255,0.03);
   }
+  html[data-theme="light"] .badge { background: rgba(2, 110, 190, 0.05); }
   .badge.lang { color: var(--cyan); border-color: rgba(34,211,238,0.3); }
   .feat .links { display: flex; gap: 12px; }
   .feat .links a {
@@ -266,7 +327,7 @@
 
   @media (max-width: 760px) {
     .feat-grid { grid-template-columns: 1fr; }
-    .nav-links { gap: 16px; }
+    .nav-links { gap: 10px; }
   }
 </style>
 </head>
@@ -278,10 +339,10 @@
     <div class="brand"><span class="dot"></span><span>DC</span></div>
     <div class="nav-links">
       <a href="#projects">项目</a>
-      <a class="nav-gh" href="https://github.com/DC1024" target="_blank" rel="noopener">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
-        GitHub
-      </a>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="切换日间/夜间主题" title="切换主题">
+        <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
     </div>
   </nav>
 
@@ -289,8 +350,18 @@
     <div class="avatar"><img src="avatar.jpg" alt="DC1024" /></div>
     <h1>你好，我是 <span class="grad">DC</span></h1>
     <div class="cta-row">
-      <a class="btn btn-primary" href="#projects">查看项目</a>
-      <a class="btn btn-ghost" href="https://github.com/DC1024" target="_blank" rel="noopener">GitHub 主页 →</a>
+      <a class="btn btn-ghost" href="https://github.com/DC1024" target="_blank" rel="noopener" aria-label="GitHub">
+        <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+        GitHub
+      </a>
+      <a class="btn btn-ghost" href="https://space.bilibili.com/1970862788" target="_blank" rel="noopener" aria-label="Bilibili">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.813 4.653h.854c1.51.054 2.769.578 3.773 1.574 1.004.995 1.524 2.249 1.56 3.76v7.36c-.036 1.51-.556 2.769-1.56 3.773s-2.262 1.524-3.773 1.56H5.333c-1.51-.036-2.769-.556-3.773-1.56S.036 18.858 0 17.347v-7.36c.036-1.511.556-2.765 1.56-3.76 1.004-.996 2.262-1.52 3.773-1.574h.774l-1.174-1.12a1.234 1.234 0 0 1-.373-.906c0-.356.124-.658.373-.907l.027-.027c.267-.249.573-.373.92-.373.347 0 .653.124.92.373L9.653 4.44c.071.071.134.142.187.213h4.267a.836.836 0 0 1 .16-.213l2.853-2.747c.267-.249.573-.373.92-.373.347 0 .662.151.929.4.267.249.391.551.391.907 0 .355-.124.657-.373.906zM5.333 7.24c-.746.018-1.373.276-1.88.773-.506.498-.769 1.13-.786 1.894v7.52c.017.764.28 1.395.786 1.893.507.498 1.134.756 1.88.773h13.334c.746-.017 1.373-.275 1.88-.773.506-.498.769-1.129.786-1.893v-7.52c-.017-.765-.28-1.396-.786-1.894-.507-.497-1.134-.755-1.88-.773zM8 11.107c.373 0 .684.124.933.373.25.249.383.569.4.96v1.173c-.017.391-.15.711-.4.96-.249.25-.56.374-.933.374s-.684-.125-.933-.374c-.25-.249-.383-.569-.4-.96V12.44c0-.373.129-.689.386-.947.258-.257.574-.386.947-.386zm8 0c.373 0 .684.124.933.373.25.249.383.569.4.96v1.173c-.017.391-.15.711-.4.96-.249.25-.56.374-.933.374s-.684-.125-.933-.374c-.25-.249-.383-.569-.4-.96V12.44c.017-.391.15-.711.4-.96.249-.249.56-.373.933-.373Z"/></svg>
+        Bilibili
+      </a>
+      <a class="btn btn-ghost" href="https://www.zhihu.com/people/1565710276" target="_blank" rel="noopener" aria-label="知乎">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5.721 0C2.251 0 0 2.25 0 5.719V18.28C0 21.751 2.252 24 5.721 24h12.56C21.751 24 24 21.75 24 18.281V5.72C24 2.249 21.75 0 18.281 0zm1.964 4.078c-.271.73-.5 1.434-.68 2.11h4.587c.545-.006.445 1.168.445 1.171H9.384a58.104 58.104 0 01-.112 3.797h2.712c.388.023.393 1.251.393 1.266H9.183a9.223 9.223 0 01-.408 2.102l.757-.604c.452.456 1.512 1.712 1.906 2.177.473.681.063 2.081.063 2.081l-2.794-3.382c-.653 2.518-1.845 3.607-1.845 3.607-.523.468-1.58.82-2.64.516 2.218-1.73 3.44-3.917 3.667-6.497H4.491c0-.015.197-1.243.806-1.266h2.71c.024-.32.086-3.254.086-3.797H6.598c-.136.406-.158.447-.268.753-.594 1.095-1.603 1.122-1.907 1.155.906-1.821 1.416-3.6 1.591-4.064.425-1.124 1.671-1.125 1.671-1.125zM13.078 6h6.377v11.33h-2.573l-2.184 1.373-.401-1.373h-1.219zm1.313 1.219v8.86h.623l.263.937 1.455-.938h1.456v-8.86z"/></svg>
+        知乎
+      </a>
     </div>
   </header>
 
@@ -403,6 +474,17 @@
     const onScroll = () => nav.classList.toggle("scrolled", window.scrollY > 12);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
+
+    const root = document.documentElement;
+    const toggle = document.getElementById("themeToggle");
+    if (toggle) {
+      toggle.addEventListener("click", () => {
+        const next = root.getAttribute("data-theme") === "light" ? "dark" : "light";
+        root.setAttribute("data-theme", next);
+        try { localStorage.setItem("theme", next); } catch (e) {}
+      });
+    }
+
     const io = new IntersectionObserver((entries) => {
       entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
     }, { threshold: 0.12 });
