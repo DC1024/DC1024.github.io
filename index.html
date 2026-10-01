@@ -183,20 +183,6 @@
     background: rgba(7, 11, 20, 0.72);
   }
   html[data-theme="light"] .nav.scrolled { background: rgba(243, 247, 253, 0.85); }
-  .brand {
-    display: flex;
-    align-items: center;
-  }
-  .brand-avatar {
-    width: 28px; height: 28px;
-    border-radius: 50%;
-    object-fit: cover;
-    display: block;
-    /* 头像本身是彩色照片，在深色导航上容易糊进背景，加一圈细边和淡光晕把它托出来。
-       ring 用 border 而不是 box-shadow：box-shadow 在 .nav.scrolled 换背景时会闪。 */
-    border: 1px solid var(--border-strong);
-    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.10);
-  }
   .nav-links { display: flex; align-items: center; gap: 16px; }
   .nav-links a {
     color: var(--muted);
@@ -788,22 +774,17 @@
   <div class="grid-overlay"></div>
 
   <nav class="nav" id="nav">
-    <!-- 品牌区用头像而不是文字「DC」：头像是彩色的、带圆形裁切，
-         比一个蓝点和两个字母更有辨识度。尺寸固定 28px —— 导航高度是硬约束，
-         这里不能跟着字体走。 -->
-    <div class="brand">
-      <img class="brand-avatar" src="avatar-124.webp" width="124" height="124" alt="DC 的头像" decoding="async" />
-    </div>
+    <!-- 板块跳转工具条放在左上角；社交入口集中在首屏主按钮区（见 .cta-row），
+         主题切换独立放在右上角。 -->
     <div class="nav-links">
       <a href="#videos">视频</a>
       <a href="#photos">摄影</a>
       <a href="#projects">项目</a>
-      <!-- 社交入口已集中在首屏主按钮区（见 .cta-row），导航只留板块跳转 + 主题切换。 -->
-      <button class="theme-toggle" id="themeToggle" type="button" aria-label="切换日间/夜间主题" title="切换主题">
-        <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
-        <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-      </button>
     </div>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="切换日间/夜间主题" title="切换主题">
+      <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+      <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
   </nav>
 
   <main>
