@@ -470,6 +470,45 @@
   .vstats { display: flex; align-items: center; gap: 15px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
   .vstats span { display: inline-flex; align-items: center; gap: 5px; }
   .vstats svg { width: 13px; height: 13px; opacity: 0.85; }
+  /* 分享二维码：播放/弹幕右侧那个小按钮，悬停（或键盘聚焦）就弹出二维码。
+     面板刻意用白底 —— 二维码必须是深色模块压浅色底，如果让它跟着深色主题的面板走，
+     就等于把码画在深色上，扫描器基本读不出来。
+     面板是向上、向右对齐弹出的（bottom: 100%），朝下会顶出 .vid 的 overflow: hidden 被裁掉。 */
+  /* z-index 必须给：整卡铺着一个 .stretch 链接（z-index: 1），而「position: relative
+     但 z-index: auto」的元素画在它下面 —— 不给的话按钮既收不到 hover 也收不到点击，
+     点上去会直接跳去 B 站。实测就是这个症状。 */
+  .vqr { position: relative; z-index: 2; margin-left: auto; display: inline-flex; }
+  .vqr-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; padding: 0;
+    border: 1px solid var(--border); border-radius: 7px;
+    background: var(--panel); color: var(--muted);
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+  }
+  .vqr-btn svg { width: 14px; height: 14px; opacity: 1; }
+  .vqr-btn:hover, .vqr-btn:focus-visible { color: var(--accent-ink); border-color: var(--accent-ink); }
+  .vqr-pop {
+    position: absolute; right: 0; bottom: calc(100% + 10px); z-index: 4;
+    width: 148px; padding: 8px;
+    border-radius: 10px; background: #fff;
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.34);
+    opacity: 0; visibility: hidden;
+    transform: translateY(6px) scale(0.96);
+    transform-origin: bottom right;
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+  }
+  /* 这里不要写 pointer-events: none —— 面板是 .vqr 的子元素，一旦它对指针透明，
+     鼠标从按钮往面板上移的途中就会脱离 .vqr:hover，面板当场消失。
+     收起状态本来就靠 visibility: hidden 挡住命中，不需要它。 */
+  .vqr:hover .vqr-pop,
+  .vqr:focus-within .vqr-pop,
+  .vqr.open .vqr-pop { opacity: 1; visibility: visible; transform: none; }
+  .vqr-pop img { display: block; width: 132px; height: 132px; }
+  .vqr-cap {
+    margin: 7px 0 0; text-align: center;
+    font-family: var(--mono); font-size: 10.5px; line-height: 1.4; color: #4a5b74;
+  }
   .sec-note {
     margin-top: 18px;
     font-family: var(--mono); font-size: 12px; color: var(--faint);
@@ -579,6 +618,8 @@
        .avatar::before 尤其过分 —— 它是 blur(4px) 的 conic 渐变在无限旋转，等于一块常驻重绘。 */
     .avatar::before { animation: none; }
     .sec-note .live { animation: none; }
+    /* 二维码面板的淡入 + 缩放也一并关掉：它是个纯装饰性的出场 */
+    .vqr-pop { transition: none; transform: none; }
   }
   /* 触屏设备既没有 hover，雪碧图也永远不会加载 —— 那个「悬停预览」提示就别摆着了 */
   @media (hover: none) {
@@ -656,9 +697,9 @@
     <div class="vid-grid" id="videoGrid">
       <!-- 占位卡：数据到达前先拿同样尺寸的空壳把版面占住，避免「内容一到、整块重排」。
            真卡由脚本替换；正常情况下首帧就是真数据（见页尾的 VIDEO_SEED 说明）。 -->
-      <article class="vid is-skeleton" aria-hidden="true"><div class="vthumb"></div><div class="vmeta"><h3>占位标题占位标题占位标题</h3><div class="vstats"><span>占位播放</span><span>占位弹幕</span></div></div></article>
-      <article class="vid is-skeleton" aria-hidden="true"><div class="vthumb"></div><div class="vmeta"><h3>占位标题占位标题占位标题</h3><div class="vstats"><span>占位播放</span><span>占位弹幕</span></div></div></article>
-      <article class="vid is-skeleton" aria-hidden="true"><div class="vthumb"></div><div class="vmeta"><h3>占位标题占位标题占位标题</h3><div class="vstats"><span>占位播放</span><span>占位弹幕</span></div></div></article>
+      <article class="vid is-skeleton" aria-hidden="true"><div class="vthumb"></div><div class="vmeta"><h3>占位标题占位标题占位标题</h3><div class="vstats"><span>占位播放</span><span>占位弹幕</span><div class="vqr"><button class="vqr-btn" type="button" disabled tabindex="-1"></button></div></div></div></article>
+      <article class="vid is-skeleton" aria-hidden="true"><div class="vthumb"></div><div class="vmeta"><h3>占位标题占位标题占位标题</h3><div class="vstats"><span>占位播放</span><span>占位弹幕</span><div class="vqr"><button class="vqr-btn" type="button" disabled tabindex="-1"></button></div></div></div></article>
+      <article class="vid is-skeleton" aria-hidden="true"><div class="vthumb"></div><div class="vmeta"><h3>占位标题占位标题占位标题</h3><div class="vstats"><span>占位播放</span><span>占位弹幕</span><div class="vqr"><button class="vqr-btn" type="button" disabled tabindex="-1"></button></div></div></div></article>
     </div>
     <p class="sec-note" id="videoNote"></p>
   </section>
@@ -785,7 +826,7 @@
        整块重排（手机端 CLS 0.80）。
        注入失败 / 还没跑过时这里保持空着，页面自动回退到 fetch('videos.json')，与改造前一致。 -->
   <!-- VIDEO_SEED_START -->
-<script type="application/json" id="videoSeed">{"generated_at":"2026-10-01T12:18:32+08:00","mid":"1970862788","space":"https://space.bilibili.com/1970862788","sort":"play_desc","total_scanned":21,"videos":[{"bvid":"BV1ed4y1o7HF","aid":"387028325","cid":"804108902","title":"学会使用Docker Compose，真用不到三分钟","play":57655,"danmaku":4,"duration":302,"pubdate":1660613400,"tname":"计算机技术","url":"https://www.bilibili.com/video/BV1ed4y1o7HF/","sprite_cols":10,"sprite_rows":10,"sprite_fw":480,"sprite_fh":270,"rank":1,"cover":"assets/videos/BV1ed4y1o7HF.jpg","sprite":"assets/videos/BV1ed4y1o7HF_sprite.jpg","preview_frames":31},{"bvid":"BV1H3411V7WY","aid":"426908377","cid":"730296377","title":"究竟什么是Docker？最适合小白的Docker教程！","play":41843,"danmaku":200,"duration":372,"pubdate":1653611400,"tname":"科学科普","url":"https://www.bilibili.com/video/BV1H3411V7WY/","sprite_cols":10,"sprite_rows":10,"sprite_fw":480,"sprite_fh":270,"rank":2,"cover":"assets/videos/BV1H3411V7WY.jpg","sprite":"assets/videos/BV1H3411V7WY_sprite.jpg","preview_frames":37},{"bvid":"BV1xP4y1k7en","aid":"905295041","cid":"966575336","title":"虚拟机最速传说？新手必会的 Hyper-V 虚拟机","play":27510,"danmaku":16,"duration":151,"pubdate":1673752746,"tname":"计算机技术","url":"https://www.bilibili.com/video/BV1xP4y1k7en/","sprite_cols":10,"sprite_rows":10,"sprite_fw":480,"sprite_fh":270,"rank":3,"cover":"assets/videos/BV1xP4y1k7en.jpg","sprite":"assets/videos/BV1xP4y1k7en_sprite.jpg","preview_frames":31}]}</script>
+<script type="application/json" id="videoSeed">{"generated_at":"2026-10-01T16:38:04+08:00","mid":"1970862788","space":"https://space.bilibili.com/1970862788","sort":"play_desc","total_scanned":21,"videos":[{"bvid":"BV1ed4y1o7HF","aid":"387028325","cid":"804108902","title":"学会使用Docker Compose，真用不到三分钟","play":57655,"danmaku":4,"duration":302,"pubdate":1660613400,"tname":"计算机技术","url":"https://www.bilibili.com/video/BV1ed4y1o7HF/","sprite_cols":10,"sprite_rows":10,"sprite_fw":480,"sprite_fh":270,"qr":"assets/videos/BV1ed4y1o7HF_qr.svg","rank":1,"cover":"assets/videos/BV1ed4y1o7HF.jpg","sprite":"assets/videos/BV1ed4y1o7HF_sprite.jpg","preview_frames":31},{"bvid":"BV1H3411V7WY","aid":"426908377","cid":"730296377","title":"究竟什么是Docker？最适合小白的Docker教程！","play":41843,"danmaku":200,"duration":372,"pubdate":1653611400,"tname":"科学科普","url":"https://www.bilibili.com/video/BV1H3411V7WY/","sprite_cols":10,"sprite_rows":10,"sprite_fw":480,"sprite_fh":270,"qr":"assets/videos/BV1H3411V7WY_qr.svg","rank":2,"cover":"assets/videos/BV1H3411V7WY.jpg","sprite":"assets/videos/BV1H3411V7WY_sprite.jpg","preview_frames":37},{"bvid":"BV1xP4y1k7en","aid":"905295041","cid":"966575336","title":"虚拟机最速传说？新手必会的 Hyper-V 虚拟机","play":27510,"danmaku":16,"duration":151,"pubdate":1673752746,"tname":"计算机技术","url":"https://www.bilibili.com/video/BV1xP4y1k7en/","sprite_cols":10,"sprite_rows":10,"sprite_fw":480,"sprite_fh":270,"qr":"assets/videos/BV1xP4y1k7en_qr.svg","rank":3,"cover":"assets/videos/BV1xP4y1k7en.jpg","sprite":"assets/videos/BV1xP4y1k7en_sprite.jpg","preview_frames":31}]}</script>
 <!-- VIDEO_SEED_END -->
 
   <script>
@@ -934,6 +975,11 @@
         s.appendChild(p);
         return s;
       }
+      /* 三个定位角 + 几个数据点，一眼能认成二维码。里面的镂空靠内外两段
+         相反的绕向做出来（nonzero 填充规则），不需要额外加 fill-rule。 */
+      var IC_QR = "M3 3h7v7H3zM5 5v3h3V5zM14 3h7v7h-7zM16 5v3h3V5z"
+                + "M3 14h7v7H3zM5 16v3h3V16zM14 14h2v2h-2zM18 14h2v2h-2z"
+                + "M14 18h2v2h-2zM18 18h2v2h-2z";
       var IC_PLAY = "M5.5 3.5v17l14-8.5-14-8.5z";
       var IC_DM = "M12 2.5c-5.24 0-9.5 3.36-9.5 7.5 0 2.35 1.29 4.46 3.32 5.86-.13 1.06-.55 2.44-1.62 3.64a.5.5 0 0 0 .42.82c2.4-.24 4.13-1.13 5.2-1.87.7.13 1.43.2 2.18.2 5.24 0 9.5-3.36 9.5-7.5S17.24 2.5 12 2.5Z";
 
@@ -1019,6 +1065,59 @@
         s2.appendChild(svg(IC_DM));
         s2.appendChild(document.createTextNode(fmtCount(v.danmaku) + " 弹幕"));
         stats.appendChild(s2);
+
+        /* 分享二维码：按播放量排在播放/弹幕右侧。悬停（或键盘聚焦）弹出，
+           触摸屏没有 hover，所以按钮点击也能切换 —— 否则手机上它就是个死按钮。 */
+        if (v.qr) {
+          var vqr = document.createElement("div");
+          vqr.className = "vqr";
+
+          var qbtn = document.createElement("button");
+          qbtn.className = "vqr-btn";
+          qbtn.type = "button";
+          qbtn.setAttribute("aria-label", "显示分享二维码：" + v.title);
+          qbtn.setAttribute("aria-expanded", "false");
+          qbtn.appendChild(svg(IC_QR));
+
+          var qpop = document.createElement("div");
+          qpop.className = "vqr-pop";
+          var qimg = document.createElement("img");
+          qimg.alt = v.title + " 的分享二维码";
+          qimg.width = 132;
+          qimg.height = 132;
+          // 只把地址记在属性上，先不设 src —— 理由和雪碧图完全一样：设了就去下载。
+          // 二维码虽小（3 张合计约 12 KB，比 525 KB 的雪碧图温和得多），但没有理由
+          // 让一个从来不碰这个按钮的访客为它付费。只有指针真的进到按钮上、
+          // 或者键盘 Tab 进来，才把 src 补上。
+          qimg.setAttribute("data-qr", v.qr);
+          qpop.appendChild(qimg);
+          var qcap = document.createElement("p");
+          qcap.className = "vqr-cap";
+          qcap.textContent = "扫码在手机上打开";
+          qpop.appendChild(qcap);
+
+          vqr.appendChild(qbtn);
+          vqr.appendChild(qpop);
+          stats.appendChild(vqr);
+
+          var loadQr = function () {
+            var src = qimg.getAttribute("data-qr");
+            if (!src) return;
+            qimg.removeAttribute("data-qr");    // 清掉，避免重复注入
+            qimg.src = src;
+          };
+          vqr.addEventListener("pointerenter", loadQr, { once: true });
+          vqr.addEventListener("focusin", loadQr, { once: true });
+
+          qbtn.addEventListener("click", function (e) {
+            // 外层铺着整卡的 <a class="stretch">，不拦住这一下就直接跳去 B 站了
+            e.preventDefault();
+            e.stopPropagation();
+            var open = vqr.classList.toggle("open");
+            qbtn.setAttribute("aria-expanded", open ? "true" : "false");
+            if (open) loadQr();
+          });
+        }
         meta.appendChild(stats);
         card.appendChild(meta);
 
@@ -1074,6 +1173,21 @@
         grid.addEventListener("pointerenter", injectSprites, { once: true });
         grid.addEventListener("focusin", injectSprites, { once: true });   // 键盘 Tab 进来也要给
       }
+
+      /* 触摸屏点开的二维码要有人负责收尾：点空白处或按 Esc 关掉。
+         桌面端的 :hover 会自己收，这里只负责收拾 .open 那个状态。 */
+      function closeQr(except) {
+        Array.prototype.forEach.call(document.querySelectorAll(".vqr.open"), function (el) {
+          if (except && el.contains(except)) return;
+          el.classList.remove("open");
+          var b = el.querySelector(".vqr-btn");
+          if (b) b.setAttribute("aria-expanded", "false");
+        });
+      }
+      document.addEventListener("pointerdown", function (e) { closeQr(e.target); });
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" || e.key === "Esc") closeQr(null);
+      });
 
       /* 名单没变就不重建 —— 重建会重放一遍进场动效，肉眼能看出闪一下 */
       function signature(list) {
