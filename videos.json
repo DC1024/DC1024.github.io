@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-01T12:13:58+08:00",
+  "generated_at": "2026-10-01T12:15:23+08:00",
   "mid": "1970862788",
   "space": "https://space.bilibili.com/1970862788",
   "sort": "play_desc",
@@ -15,15 +15,10 @@
       "pubdate": 1660613400,
       "tname": "计算机技术",
       "url": "https://www.bilibili.com/video/BV1ed4y1o7HF/",
-      "cid": "804108902",
-      "sprite_cols": 10,
-      "sprite_rows": 10,
-      "sprite_fw": 480,
-      "sprite_fh": 270,
       "rank": 1,
       "cover": "assets/videos/BV1ed4y1o7HF.jpg",
-      "sprite": "assets/videos/BV1ed4y1o7HF_sprite.jpg",
-      "preview_frames": 31
+      "sprite": "",
+      "preview_frames": 0
     },
     {
       "bvid": "BV1H3411V7WY",
@@ -55,15 +50,10 @@
       "pubdate": 1673752746,
       "tname": "计算机技术",
       "url": "https://www.bilibili.com/video/BV1xP4y1k7en/",
-      "cid": "966575336",
-      "sprite_cols": 10,
-      "sprite_rows": 10,
-      "sprite_fw": 480,
-      "sprite_fh": 270,
       "rank": 3,
       "cover": "assets/videos/BV1xP4y1k7en.jpg",
-      "sprite": "assets/videos/BV1xP4y1k7en_sprite.jpg",
-      "preview_frames": 31
+      "sprite": "",
+      "preview_frames": 0
     }
   ]
 }
