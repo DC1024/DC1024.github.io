@@ -10,8 +10,10 @@
   appkey + appsec 的 md5 签名，签名正确即放行，是目前最稳的服务端抓取路径。
 
 产物：
-  videos.json                      —— 站点直接 fetch 渲染卡片
+  videos.json                      —— 站点直接 fetch 渲染卡片；同时被 inject_seed.py
+                                      内联进 index.html，让首屏不用等这次网络往返
   assets/videos/<bvid>.jpg         —— 封面（可选降采样到 720 宽）
+  assets/videos/<bvid>.webp        —— 封面的 WebP 版本（站点 <picture> 优先取它）
   assets/videos/<bvid>_sprite.jpg  —— B 站官方视频缩略图雪碧图（hover 预览用）
 
 设计原则：
@@ -63,6 +65,7 @@ JSON_PATH = os.path.join(ROOT, "videos.json")
 
 COVER_MAX_W = 720          # 封面降采样目标宽度（Pillow 可用时生效）
 COVER_QUALITY = 82
+COVER_WEBP_QUALITY = 84    # 封面的 WebP 版本：站点用 <picture> 优先取它，实测小 40%+
 
 _SSL = ssl.create_default_context()
 _SSL.check_hostname = False
@@ -309,6 +312,41 @@ def detect_frames(path: str, cols: int, rows: int):
         return None
 
 
+def cover_webp_rel(cover_rel: str) -> str:
+    """assets/videos/BVxxx.jpg -> assets/videos/BVxxx.webp"""
+    return os.path.splitext(cover_rel)[0] + ".webp"
+
+
+def write_cover_webp(cover_rel: str) -> bool:
+    """
+    按需生成封面的 WebP 版本。站点卡片用 <picture> 优先取它（实测 720×450 的封面
+    能小 40% 以上），source 加载失败会自动回落到 .jpg，所以这里失败了也不影响站点。
+
+    要「按需」而不是每次都重算：源 jpg 是幂等下载的（存在就跳过），只有它被换掉时
+    才需要重新编码，否则每天都会平白多出一堆二进制 diff。
+    """
+    jpg = os.path.join(ROOT, cover_rel)
+    webp = os.path.join(ROOT, cover_webp_rel(cover_rel))
+    if not os.path.exists(jpg):
+        return False
+    if (os.path.exists(webp) and os.path.getsize(webp) > 1024
+            and os.path.getmtime(webp) >= os.path.getmtime(jpg)):
+        return True
+    try:
+        from PIL import Image
+    except Exception:                                            # noqa: BLE001
+        return False
+    try:
+        with Image.open(jpg) as im:
+            im.convert("RGB").save(webp, "WEBP", quality=COVER_WEBP_QUALITY, method=6)
+        log("  写入 %s (%.1f KB)" % (os.path.relpath(webp, ROOT),
+                                     os.path.getsize(webp) / 1024.0))
+        return True
+    except Exception as e:                                       # noqa: BLE001
+        log("  WebP 生成失败 %s: %r" % (cover_rel, e))
+        return False
+
+
 def prune_assets(keep: list[str]) -> None:
     """删掉 assets/videos 里已经没人引用的封面/雪碧图，避免仓库无限膨胀。"""
     if not os.path.isdir(ASSET_DIR):
@@ -395,6 +433,10 @@ def build() -> int:
             got_sprite = True
             log("  雪碧图抓取失败，沿用上一轮已提交的 %s" % sprite_local)
 
+        if got_cover:
+            # 顺带生成 WebP 版本；失败不影响站点（<picture> 会自动回落到 jpg）
+            write_cover_webp(cover_local)
+
         v["rank"] = i
         v["cover"] = cover_local if got_cover else v["cover_remote"]
         frames_api = int(v.pop("frames", 0) or 0)
@@ -422,8 +464,11 @@ def build() -> int:
         log("!! 无有效结果，保留现有 videos.json 不动")
         return 1
 
-    # 3) 清掉本轮没入选的旧素材
-    prune_assets([x for v in ok for x in (v.get("cover"), v.get("sprite"))])
+    # 3) 清掉本轮没入选的旧素材。WebP 版本必须一并列进保留名单，
+    #    否则会被当成「没人引用的文件」删掉 —— 上一版就是这么误删过两张雪碧图的。
+    keep = [x for v in ok for x in (v.get("cover"), v.get("sprite"))]
+    keep += [cover_webp_rel(c) for c in keep if c and c.endswith(".jpg")]
+    prune_assets(keep)
 
     payload = {
         "generated_at": datetime.now(CST).isoformat(timespec="seconds"),

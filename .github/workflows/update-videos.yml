@@ -1,8 +1,7 @@
 name: Update Bilibili top videos
 
-# 每 24 小时重抓一次 UP 主播放量最高的视频，更新 videos.json 与本地素材。
-# 站点（index.html）在浏览器里 fetch videos.json 渲染卡片，
-# 所以这里只要提交数据文件，网页就自动跟着换。
+# 每 24 小时重抓一次 UP 主播放量最高的视频，更新 videos.json、本地素材，
+# 并把数据内联进 index.html —— 这样首屏不用再等一次网络往返就能渲染出卡片。
 on:
   schedule:
     # 21:10 UTC = 次日 05:10 北京时间，避开整点高峰
@@ -28,7 +27,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      # Pillow 只用来把封面压到 720 宽（省流量）。装不上也能跑，脚本会自动退回原图。
+      # Pillow 用来把封面压到 720 宽、并生成 WebP 版本。装不上也能跑：
+      # 脚本退回原图，站点那边的 <picture> 也会自动回落到 .jpg。
       - name: Install Pillow (optional)
         run: pip install --quiet pillow
 
@@ -49,6 +49,42 @@ jobs:
         run: |
           echo "::warning::B 站抓取失败，本次保留上一版 videos.json（站点不会挂，只是数据没刷新）"
 
+      # 素材缺失必须硬失败 —— 绝不能让一份引用了不存在文件的 videos.json 被提交上去。
+      # 这个 workflow 有过一次静默删掉已提交雪碧图的记录（后来靠 52cd81e 手工恢复）。
+      - name: Verify referenced assets exist
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, sys
+
+          if not os.path.exists("videos.json"):
+              sys.exit("!! videos.json 不存在")
+          with open("videos.json", encoding="utf-8") as f:
+              data = json.load(f)
+          vids = data.get("videos") or []
+          if not vids:
+              sys.exit("!! videos.json 里没有 videos")
+
+          missing, checked = [], 0
+          for v in vids:
+              for key in ("cover", "sprite"):
+                  p = v.get(key) or ""
+                  if not p.startswith("assets/"):
+                      continue          # 远端兜底地址，本地没有是正常的
+                  checked += 1
+                  if not os.path.exists(p) or os.path.getsize(p) < 2048:
+                      missing.append(p)
+
+          if missing:
+              sys.exit("!! 以下素材缺失或是空文件：\n  " + "\n  ".join(sorted(set(missing))))
+          print("素材齐全：%d 条视频 / %d 个本地文件" % (len(vids), checked))
+          PY
+
+      # 把 videos.json 内联进 index.html。标记被删掉时脚本返回 2、这一步会失败 ——
+      # 那属于事故，不能静默跳过（静默跳过只会让站点悄悄退回「要等一次网络往返」的版本）。
+      - name: Inline video data into index.html
+        run: python scripts/inject_seed.py
+
       - name: Commit changes
         run: |
           set -euo pipefail
@@ -58,7 +94,7 @@ jobs:
           fi
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A videos.json assets/videos
+          git add -A videos.json assets/videos index.html
           git diff --cached --stat
           git commit -m "chore(videos): refresh Bilibili top videos [skip ci]"
           git push
@@ -79,4 +115,7 @@ jobs:
                   v.get("rank"), format(v.get("play", 0), ","),
                   v.get("title", ""), v.get("bvid", ""), v.get("url", "")))
           print("\n生成时间：`%s`" % d.get("generated_at", "?"))
+          print("\n素材：")
+          for v in d.get("videos", []):
+              print("- `%s`" % v.get("cover", "?"))
           PY
