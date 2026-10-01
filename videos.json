@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-01T12:15:23+08:00",
+  "generated_at": "2026-10-01T12:17:19+08:00",
   "mid": "1970862788",
   "space": "https://space.bilibili.com/1970862788",
   "sort": "play_desc",
@@ -8,6 +8,7 @@
     {
       "bvid": "BV1ed4y1o7HF",
       "aid": "387028325",
+      "cid": "804108902",
       "title": "学会使用Docker Compose，真用不到三分钟",
       "play": 57655,
       "danmaku": 4,
@@ -17,12 +18,13 @@
       "url": "https://www.bilibili.com/video/BV1ed4y1o7HF/",
       "rank": 1,
       "cover": "assets/videos/BV1ed4y1o7HF.jpg",
-      "sprite": "",
-      "preview_frames": 0
+      "sprite": "assets/videos/BV1ed4y1o7HF_sprite.jpg",
+      "preview_frames": 31
     },
     {
       "bvid": "BV1H3411V7WY",
       "aid": "426908377",
+      "cid": "730296377",
       "title": "究竟什么是Docker？最适合小白的Docker教程！",
       "play": 41843,
       "danmaku": 200,
@@ -30,11 +32,6 @@
       "pubdate": 1653611400,
       "tname": "科学科普",
       "url": "https://www.bilibili.com/video/BV1H3411V7WY/",
-      "cid": "730296377",
-      "sprite_cols": 10,
-      "sprite_rows": 10,
-      "sprite_fw": 480,
-      "sprite_fh": 270,
       "rank": 2,
       "cover": "assets/videos/BV1H3411V7WY.jpg",
       "sprite": "assets/videos/BV1H3411V7WY_sprite.jpg",
@@ -43,6 +40,7 @@
     {
       "bvid": "BV1xP4y1k7en",
       "aid": "905295041",
+      "cid": "966575336",
       "title": "虚拟机最速传说？新手必会的 Hyper-V 虚拟机",
       "play": 27510,
       "danmaku": 16,
@@ -52,8 +50,8 @@
       "url": "https://www.bilibili.com/video/BV1xP4y1k7en/",
       "rank": 3,
       "cover": "assets/videos/BV1xP4y1k7en.jpg",
-      "sprite": "",
-      "preview_frames": 0
+      "sprite": "assets/videos/BV1xP4y1k7en_sprite.jpg",
+      "preview_frames": 31
     }
   ]
 }

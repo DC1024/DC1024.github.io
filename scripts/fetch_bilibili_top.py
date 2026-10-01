@@ -176,12 +176,22 @@ def list_videos(order: str, pages: int = 2) -> list[dict]:
 
 
 def classify(raw: dict) -> dict:
-    """把 App 列表项转成站点需要的结构。"""
+    """
+    把 App 列表项转成站点需要的结构。
+
+    列表项本身已经带齐了渲染所需的一切（标题、封面、play、danmaku、
+    duration、ctime、bvid、first_cid），所以**不需要**再去调
+    api.bilibili.com/x/web-interface/view —— 那个域名在 GitHub runner 的
+    机房 IP 上会被 WAF 拦（实测 412），而 app.bilibili.com 网关不会。
+    少一次外部调用 = 少一处会挂的地方。
+    """
     bvid = raw.get("bvid") or ""
     aid = str(raw.get("param") or raw.get("aid") or "")
     return {
         "bvid": bvid,
         "aid": aid,
+        # first_cid 是分 P 视频首 P 的 cid，20/20 条都有；取雪碧图要用它
+        "cid": str(raw.get("first_cid") or ""),
         "title": (raw.get("title") or "").strip(),
         "play": int(raw.get("play") or 0),
         "danmaku": int(raw.get("danmaku") or 0),
@@ -191,32 +201,6 @@ def classify(raw: dict) -> dict:
         "cover_remote": (raw.get("cover") or "").replace("http://", "https://"),
         "url": "https://www.bilibili.com/video/%s/" % bvid if bvid else "",
     }
-
-
-def fetch_stats_and_cid(v: dict) -> None:
-    """补 cid 与精确播放量（列表里的 play 可能有延迟）。失败不致命。"""
-    try:
-        j = web_api("/x/web-interface/view?aid=%s" % v["aid"])
-    except Exception as e:                                       # noqa: BLE001
-        log("  view 接口失败 %s: %r" % (v["bvid"], e))
-        return
-    d = j.get("data") or {}
-    if j.get("code") != 0 or not d:
-        return
-    pages = d.get("pages") or []
-    if pages:
-        v["cid"] = str(pages[0].get("cid") or "")
-    stat = d.get("stat") or {}
-    if stat.get("view"):
-        v["play"] = int(stat["view"])
-    if stat.get("danmaku") is not None:
-        v["danmaku"] = int(stat.get("danmaku") or 0)
-    if d.get("duration"):
-        v["duration"] = int(d["duration"])
-    if d.get("pubdate"):
-        v["pubdate"] = int(d["pubdate"])
-    if d.get("pic"):
-        v["cover_remote"] = d["pic"].replace("http://", "https://")
 
 
 def fetch_sprite(v: dict) -> None:
@@ -231,8 +215,10 @@ def fetch_sprite(v: dict) -> None:
             j = web_api("/x/player/videoshot?aid=%s&cid=%s&index=1"
                         % (v["aid"], v["cid"]))
         except Exception as e:                                   # noqa: BLE001
-            log("  videoshot 失败 %s: %r" % (v["bvid"], e))
-            break
+            # api.bilibili.com 在机房 IP 上会被 WAF 拦（412），值得重试
+            log("  videoshot 失败(第%d次) %s: %r" % (attempt + 1, v["bvid"], e))
+            time.sleep(2.0 * (attempt + 1))
+            continue
         if j.get("code") != 0:
             log("  videoshot code=%s %s" % (j.get("code"), j.get("message")))
             break
@@ -388,16 +374,26 @@ def build() -> int:
     ok: list[dict] = []
     for i, v in enumerate(top, 1):
         log("%d) %s  play=%s  %s" % (i, v["bvid"], v["play"], v["title"][:40]))
-        fetch_stats_and_cid(v)
         fetch_sprite(v)
         time.sleep(0.5)
 
         cover_local = "assets/videos/%s.jpg" % v["bvid"]
         sprite_local = "assets/videos/%s_sprite.jpg" % v["bvid"]
+        cover_abs = os.path.join(ROOT, cover_local)
+        sprite_abs = os.path.join(ROOT, sprite_local)
+
         got_cover = bool(v["cover_remote"]) and download_asset(
-            v["cover_remote"], os.path.join(ROOT, cover_local), shrink_cover=True)
+            v["cover_remote"], cover_abs, shrink_cover=True)
+        if not got_cover and os.path.exists(cover_abs) and os.path.getsize(cover_abs) > 2048:
+            got_cover = True            # 沿用上一轮已提交的封面
+
         got_sprite = bool(v.get("sprite_remote")) and download_asset(
-            v["sprite_remote"], os.path.join(ROOT, sprite_local))
+            v["sprite_remote"], sprite_abs)
+        if not got_sprite and os.path.exists(sprite_abs) and os.path.getsize(sprite_abs) > 2048:
+            # videoshot 偶发被 WAF 拦（412）时就走到这里：宁可沿用上一轮的预览，
+            # 也绝不能让卡片把已经有的 hover 预览丢掉。
+            got_sprite = True
+            log("  雪碧图抓取失败，沿用上一轮已提交的 %s" % sprite_local)
 
         v["rank"] = i
         v["cover"] = cover_local if got_cover else v["cover_remote"]
