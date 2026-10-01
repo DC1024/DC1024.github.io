@@ -305,8 +305,8 @@
 
   /* 首屏社交按钮：亮色模式原本 --panel 是 0.78 白（近乎实底，网格被盖住），
      与暗色模式的半透明幽灵风（0.045 白，网格透出）不一致；
-     这里把亮色模式按钮底色压成极淡的暗色调，让网格同样透出，两套主题观感一致。 */
-  html[data-theme="light"] .cta-row a { background: rgba(13, 27, 46, 0.05); }
+     这里把亮色模式按钮底色直接置为透明，只剩边框、网格透出，与暗色观感一致（不发灰）。 */
+  html[data-theme="light"] .cta-row a { background: transparent; }
 
   /* sections */
   section { padding: clamp(48px, 8vh, 80px) 0; }
