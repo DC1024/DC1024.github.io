@@ -1,2 +1,7 @@
 __pycache__/
 *.pyc
+
+# 摄影原图（png，已调色，单张几 MB 到十几 MB）不上传仓库。
+# 仓库里只放 scripts/build_photos.py 生成的 WebP 三档（assets/photos/）和清单 photos.json。
+# 换照片的流程：把 png 丢进 photos-src/ → 跑 build_photos.py → 提交 WebP 与 json。
+photos-src/

@@ -1,0 +1,51 @@
+{
+  "generated_at": "2026-10-01T18:28:16+08:00",
+  "count": 4,
+  "stale_skipped": 0,
+  "photos": [
+    {
+      "slug": "nara-deer",
+      "thumb": "assets/photos/nara-deer-thumb.webp",
+      "mid": "assets/photos/nara-deer-mid.webp",
+      "full": "assets/photos/nara-deer-full.webp",
+      "width": 6000,
+      "height": 4000,
+      "title": "奈良的鹿",
+      "place": "奈良",
+      "rank": 1
+    },
+    {
+      "slug": "osaka-street",
+      "thumb": "assets/photos/osaka-street-thumb.webp",
+      "mid": "assets/photos/osaka-street-mid.webp",
+      "full": "assets/photos/osaka-street-full.webp",
+      "width": 1600,
+      "height": 1600,
+      "title": "大阪的街",
+      "place": "大阪",
+      "rank": 2
+    },
+    {
+      "slug": "kyoto-rain",
+      "thumb": "assets/photos/kyoto-rain-thumb.webp",
+      "mid": "assets/photos/kyoto-rain-mid.webp",
+      "full": "assets/photos/kyoto-rain-full.webp",
+      "width": 4032,
+      "height": 3024,
+      "title": "京都的雨",
+      "place": "京都",
+      "rank": 3
+    },
+    {
+      "slug": "tokyo-night",
+      "thumb": "assets/photos/tokyo-night-thumb.webp",
+      "mid": "assets/photos/tokyo-night-mid.webp",
+      "full": "assets/photos/tokyo-night-full.webp",
+      "width": 3024,
+      "height": 4032,
+      "title": "",
+      "place": "",
+      "rank": 4
+    }
+  ]
+}

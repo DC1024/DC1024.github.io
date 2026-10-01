@@ -415,6 +415,8 @@
      免得页面上出现一个没有 01 的 02。html.js 由 head 里的内联脚本加上。 */
   html:not(.js) #videos { display: none; }
   html:not(.js) #projects .idx { display: none; }
+  /* 摄影区同理：区块由脚本渲染，没有 JS 就什么都没有，留个空标题只会显得像坏了 */
+  html:not(.js) #photos { display: none; }
   .vid:hover { transform: translateY(-4px); border-color: var(--border-strong); background: var(--panel-hover); box-shadow: 0 14px 34px rgba(2, 110, 190, 0.16); }
   .vid .stretch { position: absolute; inset: 0; z-index: 1; border-radius: inherit; }
   .vthumb {
@@ -509,6 +511,144 @@
     margin: 7px 0 0; text-align: center;
     font-family: var(--mono); font-size: 10.5px; line-height: 1.4; color: #4a5b74;
   }
+
+  /* ---------- 摄影作品（02）----------
+     一排三张是硬要求，所以这里不能用 .vid-grid 那套 auto-fit：
+     auto-fit 在窄屏会自动降到两列/一列，而「每排三张」在手机上会窄到看不清。
+     折中方案：桌面固定三列（用户要的），窄屏才退到两列 —— 手机上硬塞三张，
+     每张只有约 110px 宽，还不如两列看得清。 */
+  .ph-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  @media (max-width: 760px) {
+    /* 手机上三列每张才 110px 左右，太窄了。降成两列，只在最小的屏上才一列。 */
+    .ph-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  }
+  @media (max-width: 420px) {
+    .ph-grid { grid-template-columns: 1fr; }
+  }
+
+  .ph {
+    position: relative;
+    display: block;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--panel);
+    overflow: hidden;
+    cursor: zoom-in;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    transition: transform 0.2s, border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  }
+  .ph:hover { transform: translateY(-4px); border-color: var(--border-strong); background: var(--panel-hover); box-shadow: 0 14px 34px rgba(2, 110, 190, 0.16); }
+  .ph:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 3px; }
+
+  /* 缩略图外层固定 4:3 —— 照片本身比例各异（横/竖/方都有），
+     如果让卡片跟着图片比例走，同一行三张会高低不齐，网格会很难看。
+     统一 4:3 + object-fit: cover 裁切，行高整齐。 */
+  .ph-thumb {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: #05080f;
+  }
+  .ph-thumb img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+  .ph:hover .ph-thumb img { transform: scale(1.04); }
+  /* 竖构图被 cover 裁掉的部分：给一点渐变压底，免得右上角糊成一块 */
+  .ph-thumb::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(180deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,0) 70%, rgba(0,0,0,0.42) 100%);
+  }
+  .ph-meta {
+    display: flex; align-items: baseline; gap: 8px;
+    padding: 11px 13px 12px;
+  }
+  .ph-meta h3 {
+    flex: 1; min-width: 0;
+    margin: 0;
+    font-size: 14.5px; font-weight: 600; line-height: 1.35;
+    color: var(--text);
+    /* 标题最多两行，超了省略 —— 卡片高度才会一致 */
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .ph-place {
+    flex: none;
+    font-family: var(--mono); font-size: 11.5px; color: var(--muted);
+    white-space: nowrap;
+  }
+
+  /* 灯箱：点开看大图。中图先在卡片尺寸上就位（有内容、不闪），
+     大图在后台悄悄换上来 —— 直接上 2560 会让点开那一刻白一下。 */
+  .lb {
+    position: fixed; inset: 0; z-index: 60;
+    display: flex; align-items: center; justify-content: center;
+    padding: clamp(12px, 3vw, 48px);
+    background: rgba(4, 7, 13, 0.9);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    opacity: 0; visibility: hidden;
+    transition: opacity 0.24s ease, visibility 0.24s;
+  }
+  .lb.open { opacity: 1; visibility: visible; }
+
+  .lb-stage {
+    position: relative;
+    max-width: min(96vw, 1600px);
+    max-height: 86vh;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+  }
+  .lb-img {
+    display: block;
+    max-width: 100%;
+    max-height: calc(86vh - 52px);
+    width: auto; height: auto;
+    border-radius: 10px;
+    background: #05080f;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+    object-fit: contain;
+  }
+  .lb-cap {
+    font-family: var(--mono); font-size: 12px; color: #b9c6da;
+    text-align: center; line-height: 1.5;
+  }
+  .lb-cap .n { color: #6f8098; }
+
+  /* 关闭 / 左右切换。按钮要做够大 —— WCAG 2.5.8 要求 24×24，这里给 40×40。
+     灯箱里的按钮自带深色底，所以不能用主题变量（页面上可能是浅色主题）。 */
+  .lb-btn {
+    position: absolute; z-index: 2;
+    width: 40px; height: 40px; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 50%;
+    background: rgba(12, 18, 30, 0.72);
+    color: #e7eef8;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .lb-btn:hover { background: rgba(30, 44, 68, 0.9); border-color: rgba(255, 255, 255, 0.4); }
+  .lb-btn:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 2px; }
+  .lb-btn svg { width: 18px; height: 18px; }
+  .lb-close { top: clamp(6px, 1.6vw, 20px); right: clamp(6px, 1.6vw, 20px); }
+  .lb-prev { left: clamp(4px, 1.4vw, 18px); top: 50%; transform: translateY(-50%); }
+  .lb-next { right: clamp(4px, 1.4vw, 18px); top: 50%; transform: translateY(-50%); }
+
+  /* 灯箱打开时禁止背景滚动。用 overflow: hidden 会丢滚动位置，
+     所以加上 scrollbar-gutter 补偿，避免内容横向跳一下。 */
+  html.lb-open, html.lb-open body { overflow: hidden; }
+  html.lb-open { scrollbar-gutter: stable; }
+
   .sec-note {
     margin-top: 18px;
     font-family: var(--mono); font-size: 12px; color: var(--faint);
@@ -590,7 +730,7 @@
   html.js .pane:not(.ready) > .pane-inner,
   html.js .pane:not(.ready) > .scroll-hint { visibility: hidden; }
   /* 分屏内的板块不再需要自己的上下留白，垂直位置由分屏居中决定 */
-  .pane #videos, .pane #projects { padding-top: 0; padding-bottom: 0; }
+  .pane #videos, .pane #photos, .pane #projects { padding-top: 0; padding-bottom: 0; }
   /* 吸附默认不开：只有 JS 判定「每一屏都装得进视口」时才加 .snap。
      mandatory 一旦碰到比视口高的分屏，会把超出的那一截永久卡在屏外，
      读不到也滚不出来（矮屏笔记本 / 手机就是这样）。 */
@@ -640,6 +780,10 @@
     .sec-note .live { animation: none; }
     /* 二维码面板的淡入 + 缩放也一并关掉：它是个纯装饰性的出场 */
     .vqr-pop { transition: none; transform: none; }
+    /* 摄影缩略图的 hover 微缩放、灯箱的淡入，同理 */
+    .ph-thumb img { transition: none; }
+    .ph:hover .ph-thumb img { transform: none; }
+    .lb { transition: none; }
   }
   /* 触屏设备既没有 hover，雪碧图也永远不会加载 —— 那个「悬停预览」提示就别摆着了 */
   @media (hover: none) {
@@ -662,6 +806,7 @@
     <div class="brand"><span class="dot"></span><span>DC</span></div>
     <div class="nav-links">
       <a href="#videos">视频</a>
+      <a href="#photos">摄影</a>
       <a href="#projects">项目</a>
       <button class="theme-toggle" id="themeToggle" type="button" aria-label="切换日间/夜间主题" title="切换主题">
         <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
@@ -735,11 +880,31 @@
   </div>
   </div>
 
+  <div class="pane" id="pane-photos">
+  <div class="pane-inner"><div class="pane-body">
+  <section id="photos" class="container" aria-labelledby="photosH">
+    <div class="sec-head">
+      <span class="idx">02</span><h2 id="photosH">摄影作品</h2><span class="line"></span>
+    </div>
+    <div class="ph-grid" id="photoGrid">
+      <!-- 占位卡：和视频区一个道理 —— 数据到达前先把版面占住。
+           缩略图比例固定 4:3（见 CSS .ph-thumb），所以空壳和真卡一样高。 -->
+      <article class="ph is-skeleton" aria-hidden="true"><div class="ph-thumb"></div><div class="ph-meta"><h3>占位标题占位标题</h3><span class="ph-place">占位</span></div></article>
+      <article class="ph is-skeleton" aria-hidden="true"><div class="ph-thumb"></div><div class="ph-meta"><h3>占位标题占位标题</h3><span class="ph-place">占位</span></div></article>
+      <article class="ph is-skeleton" aria-hidden="true"><div class="ph-thumb"></div><div class="ph-meta"><h3>占位标题占位标题</h3><span class="ph-place">占位</span></div></article>
+    </div>
+    <p class="sec-note" id="photoNote"></p>
+  </section>
+  </div></div>
+  <!-- 同上：这一屏解析完，放开它自己 -->
+  <script>document.currentScript.parentElement.classList.add("ready");</script>
+  </div>
+
   <div class="pane" id="pane-projects">
   <div class="pane-inner"><div class="pane-body">
   <section id="projects" class="container" aria-labelledby="projectsH">
     <div class="sec-head">
-      <span class="idx">02</span><h2 id="projectsH">核心项目</h2><span class="line"></span>
+      <span class="idx">03</span><h2 id="projectsH">核心项目</h2><span class="line"></span>
     </div>
     <div class="feat-grid">
       <article class="feat">
@@ -855,6 +1020,33 @@
 <script type="application/json" id="videoSeed">{"generated_at":"2026-10-01T16:38:04+08:00","mid":"1970862788","space":"https://space.bilibili.com/1970862788","sort":"play_desc","total_scanned":21,"videos":[{"bvid":"BV1ed4y1o7HF","aid":"387028325","cid":"804108902","title":"学会使用Docker Compose，真用不到三分钟","play":57655,"danmaku":4,"duration":302,"pubdate":1660613400,"tname":"计算机技术","url":"https://www.bilibili.com/video/BV1ed4y1o7HF/","sprite_cols":10,"sprite_rows":10,"sprite_fw":480,"sprite_fh":270,"qr":"assets/videos/BV1ed4y1o7HF_qr.svg","rank":1,"cover":"assets/videos/BV1ed4y1o7HF.jpg","sprite":"assets/videos/BV1ed4y1o7HF_sprite.jpg","preview_frames":31},{"bvid":"BV1H3411V7WY","aid":"426908377","cid":"730296377","title":"究竟什么是Docker？最适合小白的Docker教程！","play":41843,"danmaku":200,"duration":372,"pubdate":1653611400,"tname":"科学科普","url":"https://www.bilibili.com/video/BV1H3411V7WY/","sprite_cols":10,"sprite_rows":10,"sprite_fw":480,"sprite_fh":270,"qr":"assets/videos/BV1H3411V7WY_qr.svg","rank":2,"cover":"assets/videos/BV1H3411V7WY.jpg","sprite":"assets/videos/BV1H3411V7WY_sprite.jpg","preview_frames":37},{"bvid":"BV1xP4y1k7en","aid":"905295041","cid":"966575336","title":"虚拟机最速传说？新手必会的 Hyper-V 虚拟机","play":27510,"danmaku":16,"duration":151,"pubdate":1673752746,"tname":"计算机技术","url":"https://www.bilibili.com/video/BV1xP4y1k7en/","sprite_cols":10,"sprite_rows":10,"sprite_fw":480,"sprite_fh":270,"qr":"assets/videos/BV1xP4y1k7en_qr.svg","rank":3,"cover":"assets/videos/BV1xP4y1k7en.jpg","sprite":"assets/videos/BV1xP4y1k7en_sprite.jpg","preview_frames":31}]}</script>
 <!-- VIDEO_SEED_END -->
 
+  <!-- 摄影数据种子 —— 同样由 scripts/inject_seed.py 在构建期注入 photos.json 的内容。
+       照片不是「每小时在变」的东西，所以这里没有定时抓取：内容变了就重跑一次构建。
+       photos.json 不存在时这里保持空着，脚本会退回 fetch('photos.json')，
+       拿不到就整块隐藏（不会留一个空壳标题栏）。 -->
+  <!-- PHOTO_SEED_START -->
+<script type="application/json" id="photoSeed">{"generated_at":"2026-10-01T18:28:16+08:00","count":4,"stale_skipped":0,"photos":[{"slug":"nara-deer","thumb":"assets/photos/nara-deer-thumb.webp","mid":"assets/photos/nara-deer-mid.webp","full":"assets/photos/nara-deer-full.webp","width":6000,"height":4000,"title":"奈良的鹿","place":"奈良","rank":1},{"slug":"osaka-street","thumb":"assets/photos/osaka-street-thumb.webp","mid":"assets/photos/osaka-street-mid.webp","full":"assets/photos/osaka-street-full.webp","width":1600,"height":1600,"title":"大阪的街","place":"大阪","rank":2},{"slug":"kyoto-rain","thumb":"assets/photos/kyoto-rain-thumb.webp","mid":"assets/photos/kyoto-rain-mid.webp","full":"assets/photos/kyoto-rain-full.webp","width":4032,"height":3024,"title":"京都的雨","place":"京都","rank":3},{"slug":"tokyo-night","thumb":"assets/photos/tokyo-night-thumb.webp","mid":"assets/photos/tokyo-night-mid.webp","full":"assets/photos/tokyo-night-full.webp","width":3024,"height":4032,"title":"","place":"","rank":4}]}</script>
+<!-- PHOTO_SEED_END -->
+
+  <!-- 灯箱：点缩略图看大图。放在 body 直属位置而不是某个分屏里 ——
+       它是 position: fixed 的全屏层，若嵌在 .pane 内，分屏的 transform/动画
+       会把它变成包含块，fixed 就不再相对视口定位了。 -->
+  <div class="lb" id="lightbox" role="dialog" aria-modal="true" aria-label="查看大图" hidden>
+    <button class="lb-btn lb-close" id="lbClose" type="button" aria-label="关闭（Esc）">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <button class="lb-btn lb-prev" id="lbPrev" type="button" aria-label="上一张（←）">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+    <button class="lb-btn lb-next" id="lbNext" type="button" aria-label="下一张（→）">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+    </button>
+    <div class="lb-stage">
+      <img class="lb-img" id="lbImg" alt="" />
+      <p class="lb-cap" id="lbCap"></p>
+    </div>
+  </div>
+
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();
     const nav = document.getElementById("nav");
@@ -948,6 +1140,29 @@
       relayout();
       return { relayout: relayout };
     })();
+
+    /* ---------- 板块编号：按「此刻真的看得见谁」重新分配 ----------
+       每个板块的编号原本在 HTML 里写死（01 视频 / 02 摄影 / 03 项目）。
+       但视频和摄影都是脚本渲染的，数据拿不到时整块会 hidden —— 那时写死的编号
+       就会出现断号（01 没了、页面直接从 02 开始，或者 01 后面跳到 03）。
+
+       所以编号统一由这里推导：跳过 [hidden] 的板块，从上往下连续编号。
+       顺序以 DOM 为准（就是视觉顺序），不维护任何额外列表。 */
+    function renumber() {
+      var n = 0;
+      Array.prototype.forEach.call(
+        document.querySelectorAll(".pane-body > section[id] > .sec-head > .idx"),
+        function (el) {
+          var sec = el.closest("section");
+          if (!sec || sec.hasAttribute("hidden") || sec.hidden) { el.textContent = ""; return; }
+          n++;
+          el.textContent = (n < 10 ? "0" : "") + n;
+        }
+      );
+    }
+    // 先按当前可见性归一化一次。HTML 里写死的 01/02/03 只是「理想情况」的默认值，
+    // 这条一跑就把它们对齐成实际顺序，后面两个模块无论谁先渲染都不会错位。
+    renumber();
 
     /* ---------- 我的视频：渲染卡片 ----------
        数据由 GitHub Actions 每 24 小时重新抓取一次（scripts/fetch_bilibili_top.py）。
@@ -1245,6 +1460,7 @@
         note.appendChild(more);
 
         sec.hidden = false;
+        renumber();
         pageSync.relayout();   // 01 变高了，重新判定这一屏还装不装得下（决定要不要吸附）
         return true;
       }
@@ -1252,8 +1468,7 @@
       /* 一条数据都拿不到时的退场：整块不显示，不留占位卡，也不留一个没有 01 的 02 */
       function fail() {
         sec.hidden = true;
-        var idx = document.querySelector("#projects .idx");
-        if (idx) idx.textContent = "01";
+        renumber();            // 剩下的板块依次顶上来，不留断号
         pageSync.relayout();
       }
 
@@ -1266,6 +1481,220 @@
       // 2) 再在后台核对一次线上数据，只有名单确实变了才重建
       if (!window.fetch) { if (!rendered) fail(); return; }
       fetch("videos.json", { cache: "no-cache" })
+        .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status)); })
+        .then(function (data) { if (!render(data) && !rendered) fail(); })
+        .catch(function () { if (!rendered) fail(); });
+    })();
+
+    /* ---------- 摄影作品：卡片 + 灯箱 ----------
+       为什么没有像视频那样每 24 小时重抓：视频的播放量是外部数据、天天在变；
+       照片是静态资产，变了就重跑一次构建，不需要定时任务。
+
+       资产是三档 WebP（thumb 900 / mid 1800 / full 2560，长边），由
+       scripts/build_photos.py 在构建期从 photos-src/ 的 png 生成。
+       png 原图只留在本地（.gitignore 里），仓库里只有 WebP。
+
+       三个尺寸各司其职：
+         - thumb 进卡片（一排三张，1440 宽下每张约 420px，高 DPR 就给到 900）
+         - mid 是点开灯箱时**立刻**显示的那张 —— 它和卡片同源，已在缓存里，
+           所以点开是「有内容地放大」，不是先白一下
+         - full 在后台悄悄换上来，替换发生时图片已经解码完，不会闪 */
+    (function () {
+      var sec = document.getElementById("photos");
+      var grid = document.getElementById("photoGrid");
+      var note = document.getElementById("photoNote");
+      var lb = document.getElementById("lightbox");
+      if (!sec || !grid || !note || !lb) return;
+
+      var lbImg = document.getElementById("lbImg");
+      var lbCap = document.getElementById("lbCap");
+      var lbClose = document.getElementById("lbClose");
+      var lbPrev = document.getElementById("lbPrev");
+      var lbNext = document.getElementById("lbNext");
+
+      var list = [];     // 渲染时的当前数据集，灯箱按它的顺序前后翻
+      var cur = -1;      // 灯箱当前索引
+      var lastFocus = null;
+
+      function render(data) {
+        var items = (data && data.photos) || [];
+        if (!items.length) return false;
+
+        // 名单没变就不重建 —— 重建会让每张缩略图重新走一遍解码，肉眼能看出闪
+        var sig = items.map(function (p) { return p.slug; }).join("|");
+        if (sig === rendered) { list = items; return true; }
+
+        grid.textContent = "";
+        items.forEach(function (p, i) {
+          var card = document.createElement("button");
+          card.className = "ph";
+          card.type = "button";
+          // 卡片信息用户明确说不要（不放标题/地点/日期/EXIF），但无障碍名称得有 ——
+          // 否则读屏用户听到的就是三个一模一样的「按钮」。
+          card.setAttribute("aria-label", "查看大图" + (p.title ? "：" + p.title : " " + (i + 1)));
+
+          var thumb = document.createElement("div");
+          thumb.className = "ph-thumb";
+          var img = document.createElement("img");
+          img.src = p.thumb;
+          img.alt = p.title || "";
+          img.width = p.width || 900;
+          img.height = p.height || 675;
+          /* 全部懒加载：摄影区整个在第二屏，首屏一定看不见它。
+             一开始想「第一排给 eager」—— 实测那会让首屏白白多下 20.6 KiB
+             （4 张缩略图），而它们对 FCP/LCP 毫无贡献。全 lazy 之后首屏
+             图像请求只剩视频封面，这部分字节是纯赚回来的。
+             注意：浏览器对 lazy 的判定用的是「离视口多远」，第二屏恰好在一屏之外，
+             所以是真的不会提前拉。 */
+          img.loading = "lazy";
+          img.decoding = "async";
+          thumb.appendChild(img);
+          card.appendChild(thumb);
+
+          card.addEventListener("click", function () { open(i, card); });
+          grid.appendChild(card);
+        });
+
+        rendered = sig;
+        list = items;
+
+        note.textContent = "";
+        note.appendChild(document.createTextNode(
+          items.length + " 张作品 · 点击查看大图" +
+          (data.generated_at ? " · 更新于 " + data.generated_at.slice(0, 10) : "") + " · "));
+        var more = document.createElement("a");
+        more.href = data.space || "https://github.com/DC1024";
+        more.target = "_blank";
+        more.rel = "noopener";
+        more.textContent = "更多作品 →";
+        note.appendChild(more);
+
+        sec.hidden = false;
+        renumber();
+        pageSync.relayout();   // 多了一屏内容，重新判定还装不装得下（决定要不要吸附）
+        return true;
+      }
+
+      function fail() {
+        sec.hidden = true;
+        renumber();            // 02 没了，项目区顶回 02，不留断号
+        pageSync.relayout();
+      }
+
+      var rendered = "";
+
+      /* ---------- 灯箱 ---------- */
+      function show(i) {
+        var p = list[i];
+        if (!p) return;
+        cur = i;
+        lbImg.src = p.mid;
+        lbImg.alt = p.title || "摄影作品 " + (i + 1);
+        lbCap.textContent = "";
+        if (p.title) lbCap.appendChild(document.createTextNode(p.title));
+        var n = document.createElement("span");
+        n.className = "n";
+        n.textContent = (p.title ? " · " : "") + (i + 1) + " / " + list.length;
+        lbCap.appendChild(n);
+        lbPrev.hidden = lbNext.hidden = list.length < 2;
+
+        // 大图换上来：先探一次，加载完再切 —— 直接改 src 会出现「中图消失、大图未到」的白帧。
+        // 换图也只在解码完成后进行，所以视觉上是从中图「变清晰」，中间没有空白。
+        if (p.full && p.full !== p.mid) {
+          var pre = new Image();
+          pre.onload = function () {
+            if (cur !== i) return;      // 用户已经翻到别的图了，别把旧图塞回来
+            lbImg.src = p.full;
+          };
+          pre.src = p.full;
+        }
+      }
+
+      function open(i, from) {
+        lastFocus = from || document.activeElement;
+        lb.hidden = false;
+        // 强制一次样式计算，否则 hidden 移除和 .open 加在同一帧里，过渡不会触发
+        void lb.offsetWidth;
+        lb.classList.add("open");
+        document.documentElement.classList.add("lb-open");
+        show(i);
+        // 焦点的坑比想象中深，实测结论如下：
+        //   1) 同一帧里 focus() → 样式还没重算，.lb 的 computed visibility 仍是 hidden；
+        //   2) 换成 requestAnimationFrame 也没用 —— 实测在整个 rAF 回调里读 computed
+        //      visibility 依然是 "hidden"（样式重算排在这一帧的布局之后）；
+        //   3) 而**对 visibility:hidden 的元素调 focus() 会静默失败**，焦点掉到 BODY，
+        //      键盘用户就此丢失位置（读屏也不报任何错，属于最隐蔽的那种 a11y bug）。
+        // 可靠做法：先强制读一次 computed style 把样式表刷新掉，确认真的 visible 之后再 focus；
+        // 仍在 hidden 就再等一帧。preventScroll 必须有：灯箱是 fixed 层，
+        // 默认的 scroll-into-view 会把背后页面滚一下。
+        (function focusClose(tries) {
+          var vis = getComputedStyle(lb).visibility;     // 这一读会把待处理的样式重算逼出来
+          if (vis === "visible" || vis === "collapse") {
+            if (lb.classList.contains("open")) lbClose.focus({ preventScroll: true });
+            return;
+          }
+          if (tries > 0) requestAnimationFrame(function () { focusClose(tries - 1); });
+        })(4);
+      }
+
+      function close() {
+        lb.classList.remove("open");
+        document.documentElement.classList.remove("lb-open");
+        // 等淡出走完再 hidden，否则关闭时会瞬间消失、看不到过渡
+        setTimeout(function () {
+          if (lb.classList.contains("open")) return;
+          lb.hidden = true;
+          lbImg.removeAttribute("src");   // 释放 2560 那张的内存
+        }, 260);
+        if (lastFocus && lastFocus.focus) lastFocus.focus();   // 焦点还给点开的那个卡片
+      }
+
+      function step(d) {
+        if (!list.length) return;
+        show((cur + d + list.length) % list.length);
+      }
+
+      lbClose.addEventListener("click", close);
+      lbPrev.addEventListener("click", function () { step(-1); });
+      lbNext.addEventListener("click", function () { step(1); });
+      // 点背景（不是点图片本身）关闭
+      lb.addEventListener("click", function (e) {
+        if (e.target === lb || e.target.classList.contains("lb-stage")) close();
+      });
+      document.addEventListener("keydown", function (e) {
+        if (lb.hidden) return;
+        if (e.key === "Escape" || e.key === "Esc") { close(); e.preventDefault(); }
+        else if (e.key === "ArrowLeft") { step(-1); e.preventDefault(); }
+        else if (e.key === "ArrowRight") { step(1); e.preventDefault(); }
+        else if (e.key === "Tab") {
+          // 焦点陷阱：灯箱是 modal，Tab 不能跑到背后页面上去
+          var f = [lbClose, lbPrev, lbNext].filter(function (b) { return !b.hidden; });
+          var i = f.indexOf(document.activeElement);
+          var next = e.shiftKey ? (i <= 0 ? f.length - 1 : i - 1) : (i === f.length - 1 ? 0 : i + 1);
+          f[next].focus();
+          e.preventDefault();
+        }
+      });
+      // 触屏左右滑动切换
+      var tx = 0, ty = 0;
+      lb.addEventListener("touchstart", function (e) {
+        tx = e.touches[0].clientX; ty = e.touches[0].clientY;
+      }, { passive: true });
+      lb.addEventListener("touchend", function (e) {
+        var dx = e.changedTouches[0].clientX - tx;
+        var dy = e.changedTouches[0].clientY - ty;
+        if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.6) step(dx < 0 ? 1 : -1);
+      }, { passive: true });
+
+      // 1) 先用页尾内联的数据同步渲染
+      var seedEl = document.getElementById("photoSeed");
+      if (seedEl && seedEl.textContent.trim()) {
+        try { render(JSON.parse(seedEl.textContent)); } catch (e) {}
+      }
+
+      // 2) 后台核对一次（照片变动频率低，这条主要是给「只改了 JSON 没重跑注入」兜底）
+      if (!window.fetch) { if (!rendered) fail(); return; }
+      fetch("photos.json", { cache: "no-cache" })
         .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status)); })
         .then(function (data) { if (!render(data) && !rendered) fail(); })
         .catch(function () { if (!rendered) fail(); });

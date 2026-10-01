@@ -51,6 +51,14 @@ jobs:
         run: |
           echo "::warning::B 站抓取失败，本次保留上一版 videos.json（站点不会挂，只是数据没刷新）"
 
+      # 摄影区那三档 WebP 也从这里生成。它只在 photos-src/（本地目录，已 gitignore）
+      # 或既有 assets/photos/ 上工作：本地有 png 就重新生成（幂等，内容没变不会产生提交），
+      # 本地没有就什么都不做 —— 所以线上这个 runner 上它实际上是个 no-op，
+      # 存在的意义是让「图片是被构建出来的」这件事在流水线里可见、可复现。
+      - name: Build photo derivatives (optional)
+        continue-on-error: true
+        run: python scripts/build_photos.py
+
       # 素材缺失必须硬失败 —— 绝不能让一份引用了不存在文件的 videos.json 被提交上去。
       # 这个 workflow 有过一次静默删掉已提交雪碧图的记录（后来靠 52cd81e 手工恢复）。
       - name: Verify referenced assets exist
@@ -77,14 +85,29 @@ jobs:
                   if not os.path.exists(p) or os.path.getsize(p) < 2048:
                       missing.append(p)
 
+          # 摄影区同样要校验：photos.json 里每一档（thumb/mid/full）都必须存在。
+          # 缺一个,灯箱就会有「点开是空白」的图 —— 那比整块隐藏更糟。
+          if os.path.exists("photos.json"):
+              with open("photos.json", encoding="utf-8") as f:
+                  photos = json.load(f).get("photos") or []
+              for p in photos:
+                  for key in ("thumb", "mid", "full"):
+                      rel = p.get(key) or ""
+                      if not rel.startswith("assets/"):
+                          continue
+                      checked += 1
+                      if not os.path.exists(rel) or os.path.getsize(rel) < 1024:
+                          missing.append(rel)
+              print("摄影素材：%d 张" % len(photos))
+
           if missing:
               sys.exit("!! 以下素材缺失或是空文件：\n  " + "\n  ".join(sorted(set(missing))))
           print("素材齐全：%d 条视频 / %d 个本地文件" % (len(vids), checked))
           PY
 
-      # 把 videos.json 内联进 index.html。标记被删掉时脚本返回 2、这一步会失败 ——
+      # 把 videos.json / photos.json 内联进 index.html。标记被删掉时脚本返回 2、这一步会失败 ——
       # 那属于事故，不能静默跳过（静默跳过只会让站点悄悄退回「要等一次网络往返」的版本）。
-      - name: Inline video data into index.html
+      - name: Inline seed data into index.html
         run: python scripts/inject_seed.py
 
       - name: Commit changes
@@ -96,7 +119,10 @@ jobs:
           fi
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A videos.json assets/videos index.html
+          # photos.json 与 assets/photos 也要一起提交：index.html 里的 photoSeed 引用了它们，
+          # 只提交 index.html 会得到一份指向不存在文件的页面。
+          # （photos-src/ 被 gitignore，-A 也不会把原图带进来。）
+          git add -A videos.json photos.json assets/videos assets/photos index.html
           git diff --cached --stat
           git commit -m "chore(videos): refresh Bilibili top videos [skip ci]"
           git push
