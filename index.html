@@ -249,6 +249,10 @@
 
   /* sections */
   section { padding: clamp(48px, 8vh, 80px) 0; }
+  /* 上面这条只有类型选择器 (0,0,1)，会被 .container 的 padding 简写 (0,1,0) 整条压掉，
+     实测 section.container 的上下内边距是 0 —— 单个板块时看不出来，
+     两个板块相邻（我的视频 / 核心项目）就会贴在一起。这里显式补回来。 */
+  section.container { padding-top: clamp(48px, 8vh, 80px); padding-bottom: clamp(48px, 8vh, 80px); }
   .sec-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 34px; }
   .sec-head h2 {
     font-size: clamp(24px, 4vw, 32px);
@@ -422,8 +426,8 @@
   <nav class="nav" id="nav">
     <div class="brand"><span class="dot"></span><span>DC</span></div>
     <div class="nav-links">
-      <a href="#projects">项目</a>
       <a href="#videos">视频</a>
+      <a href="#projects">项目</a>
       <button class="theme-toggle" id="themeToggle" type="button" aria-label="切换日间/夜间主题" title="切换主题">
         <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
         <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -454,9 +458,17 @@
     </div>
   </header>
 
+  <section id="videos" class="container reveal" hidden>
+    <div class="sec-head">
+      <span class="idx">01</span><h2>我的视频</h2><span class="line"></span>
+    </div>
+    <div class="vid-grid" id="videoGrid"></div>
+    <p class="sec-note" id="videoNote"></p>
+  </section>
+
   <section id="projects" class="container reveal">
     <div class="sec-head">
-      <span class="idx">01</span><h2>核心项目</h2><span class="line"></span>
+      <span class="idx">02</span><h2>核心项目</h2><span class="line"></span>
     </div>
     <div class="feat-grid">
       <article class="feat">
@@ -551,14 +563,6 @@
         </div>
       </article>
     </div>
-  </section>
-
-  <section id="videos" class="container reveal" hidden>
-    <div class="sec-head">
-      <span class="idx">02</span><h2>我的视频</h2><span class="line"></span>
-    </div>
-    <div class="vid-grid" id="videoGrid"></div>
-    <p class="sec-note" id="videoNote"></p>
   </section>
 
   <footer class="container">
@@ -764,7 +768,12 @@
           sec.hidden = false;
           sec.classList.add("in");     // 元素此前是 hidden，IntersectionObserver 不会触发
         })
-        .catch(function () { /* 拿不到数据就整块不显示，不留空壳 */ });
+        .catch(function () {
+          /* 拿不到数据就整块不显示，不留空壳；同时把核心项目提回 01，
+             免得页面上出现一个没有 01 的 02。 */
+          var idx = document.querySelector("#projects .idx");
+          if (idx) idx.textContent = "01";
+        });
     })();
   </script>
 </body>
