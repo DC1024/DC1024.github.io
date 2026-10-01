@@ -38,13 +38,10 @@ jobs:
         env:
           BILI_MID: "1970862788"
           BILI_TOP_N: "3"
-          # 别让 runner 上可能存在的代理变量影响对 B 站的直连
-          http_proxy: ""
-          https_proxy: ""
-          HTTP_PROXY: ""
-          HTTPS_PROXY: ""
-          all_proxy: ""
-          ALL_PROXY: ""
+        # 不用清 http_proxy / HTTP_PROXY —— 脚本内部固定用
+        # urllib ProxyHandler({}) 建 opener，本来就不读环境代理。
+        # 而且 GitHub Actions 的 YAML 里 http_proxy 与 HTTP_PROXY 视为同一键，
+        # 两个都写会直接报 "already defined" 导致 workflow 解析失败。
         run: python scripts/fetch_bilibili_top.py
 
       - name: Warn when fetch failed

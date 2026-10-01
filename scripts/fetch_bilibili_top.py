@@ -251,8 +251,10 @@ def fetch_sprite(v: dict) -> None:
     cols = int(d.get("img_x_len") or 10)
     rows = int(d.get("img_y_len") or 10)
     index = d.get("index") or []
-    # 未取到 index 时先记 0（=不做 hover 动画），等素材落盘后用图像本身兜底
-    frames = len(index) if index else 0
+    # index 是每帧的时间戳数组，但**开头有一个重复的占位 0**
+    # （实测 [0,0,5,10,...]），真实帧数 = len(index) - 1。
+    # 这个值只是备选：雪碧图里真正填了几格由 detect_frames 说了算。
+    frames = max(1, len(index) - 1) if index else 0
     frames = max(0, min(int(frames), cols * rows))
     v["sprite_remote"] = url
     v["sprite_cols"] = cols
@@ -285,36 +287,40 @@ def download_asset(url: str, dest: str, shrink_cover: bool = False) -> bool:
     return True
 
 
-def detect_frames(path: str, cols: int, rows: int, fallback: int) -> int:
+def detect_frames(path: str, cols: int, rows: int):
     """
-    数出雪碧图里真正有内容的格子数（B 站会把没用的格子留成纯黑）。
+    数出雪碧图里真正填了内容的格子数 —— 这是图像本身给出的事实，
+    比接口的 index 数组更可信，所以优先用它。
 
-    做法：整图降到 cols×rows，每个像素即该格的平均亮度，从后往前找第一个
-    亮于阈值的格子。没有 Pillow 时退回 fallback。
+    做法：整图 BOX 降到 cols×rows，每个像素即该格平均亮度；B 站把没用到的
+    格子留成**纯黑（实测精确为 0）**，于是从后往前找第一个 >2 的格子即可。
+    阈值取 2 而不是更高，是为了保住视频结尾那种确实很暗的真实帧。
+
+    返回 None 表示判断不了（没装 Pillow / 打不开图），由调用方决定退路。
     """
     try:
         from PIL import Image
     except Exception:                                            # noqa: BLE001
-        return fallback
+        return None
     try:
         with Image.open(path) as im:
             g = im.convert("L")
             if g.width < cols or g.height < rows:
-                return fallback
+                return None
             small = g.resize((cols, rows), Image.BOX)
-            px = list(small.getdata())
+            px = small.tobytes()        # mode L 下每像素 1 字节
+            # 用 tobytes() 而不是已弃用的 getdata()（Pillow 14 会移除）
         total = cols * rows
+        if len(px) < total:
+            return None
         last = -1
         for i in range(total - 1, -1, -1):
-            if px[i] > 12:          # 阈值 12/255，足以滤掉纯黑填充
+            if px[i] > 2:
                 last = i
                 break
-        found = last + 1
-        if found <= 0:
-            return fallback
-        return min(found, total)
+        return last + 1 if last >= 0 else None
     except Exception:                                            # noqa: BLE001
-        return fallback
+        return None
 
 
 def prune_assets(keep: list[str]) -> None:
@@ -395,15 +401,17 @@ def build() -> int:
 
         v["rank"] = i
         v["cover"] = cover_local if got_cover else v["cover_remote"]
-        frames = int(v.pop("frames", 0) or 0)
+        frames_api = int(v.pop("frames", 0) or 0)
         cols = int(v.get("sprite_cols") or 10)
         rows = int(v.get("sprite_rows") or 10)
-        if got_sprite and not frames:
-            # 接口没给 index，就用图像本身数格子
-            frames = detect_frames(os.path.join(ROOT, sprite_local), cols, rows,
-                                   cols * rows)
-            if frames:
-                log("  由图像推定有效帧数 = %d" % frames)
+        frames = frames_api
+        if got_sprite:
+            # 图像是事实来源：接口的 index 偶发为空，且其长度比真实帧数多 1
+            detected = detect_frames(os.path.join(ROOT, sprite_local), cols, rows)
+            if detected:
+                if detected != frames_api:
+                    log("  有效帧数取图像实测 %d（接口给的 %d）" % (detected, frames_api))
+                frames = detected
         if got_sprite and frames:
             v["sprite"] = sprite_local
         else:

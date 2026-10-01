@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-01T12:06:11+08:00",
+  "generated_at": "2026-10-01T12:13:58+08:00",
   "mid": "1970862788",
   "space": "https://space.bilibili.com/1970862788",
   "sort": "play_desc",
@@ -23,7 +23,7 @@
       "rank": 1,
       "cover": "assets/videos/BV1ed4y1o7HF.jpg",
       "sprite": "assets/videos/BV1ed4y1o7HF_sprite.jpg",
-      "preview_frames": 32
+      "preview_frames": 31
     },
     {
       "bvid": "BV1H3411V7WY",
@@ -43,13 +43,13 @@
       "rank": 2,
       "cover": "assets/videos/BV1H3411V7WY.jpg",
       "sprite": "assets/videos/BV1H3411V7WY_sprite.jpg",
-      "preview_frames": 38
+      "preview_frames": 37
     },
     {
       "bvid": "BV1xP4y1k7en",
       "aid": "905295041",
       "title": "虚拟机最速传说？新手必会的 Hyper-V 虚拟机",
-      "play": 27509,
+      "play": 27510,
       "danmaku": 16,
       "duration": 151,
       "pubdate": 1673752746,
@@ -63,7 +63,7 @@
       "rank": 3,
       "cover": "assets/videos/BV1xP4y1k7en.jpg",
       "sprite": "assets/videos/BV1xP4y1k7en_sprite.jpg",
-      "preview_frames": 32
+      "preview_frames": 31
     }
   ]
 }
