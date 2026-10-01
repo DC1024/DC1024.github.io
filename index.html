@@ -513,6 +513,12 @@
     margin-top: 18px;
     font-family: var(--mono); font-size: 12px; color: var(--faint);
     display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    /* 这行字是数据到位后由 JS 填进去的（index.html 里它是个空 <p>），
+       空着 0px、填上 20px —— 于是数据一到整块 01 又长高 20px，桌面端还剩一条
+       0.0053 的残余位移（就是这条撑出来的；占位卡和真卡的高度实测分毫不差）。
+       先把高度占住：1.7em = 20.4px，比实测的 20 略高一点点，那 0.4px 看不出来，
+       但空/满两种状态一样高，位移就没了。 */
+    min-height: 1.7em;
   }
   /* 实测这条「去 B 站看全部作品 →」只有 119×20。padding 撑到 24 高，
      负外边距把外框尺寸还回去，行高不变。下划线样式也从内联挪到这里。 */
@@ -569,6 +575,20 @@
   /* auto 外边距 = 有富余就居中、装不下就顶到上沿（不会像 justify-content:center
      那样把超出的一截顶到导航底下看不见） */
   .pane-body { margin-block: auto; width: 100%; }
+  /* 上面那条「居中还是顶到上沿」的判断依赖内容高度，而文档还在流式到达时，
+     这个高度是**还不知道**的：index.html 有 65 KB，线上 TTFB ≈ 800ms、正文分块到达，
+     浏览器手里只有 head + hero 这一截就先画了一帧 —— 那一刻 .pane-body 只有 hero
+     （300 来像素，装得下）→ 被居中；等 #videos 解析出来、内容涨到 700+ 像素（装不下）
+     → 外边距塌成 0、整块跳回上沿。实测这一跳桌面 Δy=-191、手机 Δy=-247，
+     CLS 0.107 / 0.280，直接越过 0.1 的「合格线」，把之前 P0 那轮做到 0.005 的成绩全吃回去。
+     办法：整块分屏在它自己解析完之前先不画。reveal 脚本就贴在 </div> 后面
+     （见正文里那两处 <script>），它执行时这块分屏的 DOM 已经齐了，
+     于是首次绘制画的就是最终位置，中间态压根不存在。
+     实测 CLS 回到桌面 0.0053 / 手机 0（再配上 .sec-note 那条 min-height 就是双 0），
+     代价是 FCP 晚 30~45ms（LCP 基本不动）。
+     没有 JS 时 html.js 不存在，这条规则不生效，内容照常显示。 */
+  html.js .pane:not(.ready) > .pane-inner,
+  html.js .pane:not(.ready) > .scroll-hint { visibility: hidden; }
   /* 分屏内的板块不再需要自己的上下留白，垂直位置由分屏居中决定 */
   .pane #videos, .pane #projects { padding-top: 0; padding-bottom: 0; }
   /* 吸附默认不开：只有 JS 判定「每一屏都装得进视口」时才加 .snap。
@@ -705,6 +725,10 @@
   </section>
 
   </div></div>
+  <!-- 这一屏的 DOM 到这儿就齐了 —— 把 .ready 打上，让上面那条 visibility 规则放开它。
+       放在这里而不是页尾：越早放开，首屏能画得越早；放在页尾会白等一大截文档。
+       document.currentScript.parentElement 就是外层那个 .pane。 -->
+  <script>document.currentScript.parentElement.classList.add("ready");</script>
   <div class="scroll-hint" aria-hidden="true">
     <span>向下滚动</span>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
@@ -813,6 +837,8 @@
   </section>
 
   </div></div>
+  <!-- 同上：第二屏解析完，放开它自己 -->
+  <script>document.currentScript.parentElement.classList.add("ready");</script>
   <footer class="container">
     <p>© <span id="year"></span> DC · 用 <span class="heart">♥</span> 与开源工具搭建 · <a href="https://github.com/DC1024" target="_blank" rel="noopener">GitHub</a></p>
   </footer>
