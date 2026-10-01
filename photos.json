@@ -1,51 +1,40 @@
 {
-  "generated_at": "2026-10-01T18:28:16+08:00",
-  "count": 4,
+  "generated_at": "2026-10-01T19:17:19+08:00",
+  "count": 3,
   "stale_skipped": 0,
   "photos": [
     {
-      "slug": "nara-deer",
-      "thumb": "assets/photos/nara-deer-thumb.webp",
-      "mid": "assets/photos/nara-deer-mid.webp",
-      "full": "assets/photos/nara-deer-full.webp",
-      "width": 6000,
-      "height": 4000,
-      "title": "奈良的鹿",
-      "place": "奈良",
+      "slug": "01",
+      "thumb": "assets/photos/01-thumb.webp",
+      "mid": "assets/photos/01-mid.webp",
+      "full": "assets/photos/01-full.webp",
+      "width": 3238,
+      "height": 2160,
+      "title": "作品 01",
+      "place": "",
       "rank": 1
     },
     {
-      "slug": "osaka-street",
-      "thumb": "assets/photos/osaka-street-thumb.webp",
-      "mid": "assets/photos/osaka-street-mid.webp",
-      "full": "assets/photos/osaka-street-full.webp",
-      "width": 1600,
-      "height": 1600,
-      "title": "大阪的街",
-      "place": "大阪",
+      "slug": "02",
+      "thumb": "assets/photos/02-thumb.webp",
+      "mid": "assets/photos/02-mid.webp",
+      "full": "assets/photos/02-full.webp",
+      "width": 3244,
+      "height": 2160,
+      "title": "作品 02",
+      "place": "",
       "rank": 2
     },
     {
-      "slug": "kyoto-rain",
-      "thumb": "assets/photos/kyoto-rain-thumb.webp",
-      "mid": "assets/photos/kyoto-rain-mid.webp",
-      "full": "assets/photos/kyoto-rain-full.webp",
-      "width": 4032,
-      "height": 3024,
-      "title": "京都的雨",
-      "place": "京都",
-      "rank": 3
-    },
-    {
-      "slug": "tokyo-night",
-      "thumb": "assets/photos/tokyo-night-thumb.webp",
-      "mid": "assets/photos/tokyo-night-mid.webp",
-      "full": "assets/photos/tokyo-night-full.webp",
-      "width": 3024,
-      "height": 4032,
-      "title": "",
+      "slug": "03",
+      "thumb": "assets/photos/03-thumb.webp",
+      "mid": "assets/photos/03-mid.webp",
+      "full": "assets/photos/03-full.webp",
+      "width": 3840,
+      "height": 2160,
+      "title": "作品 03",
       "place": "",
-      "rank": 4
+      "rank": 3
     }
   ]
 }
