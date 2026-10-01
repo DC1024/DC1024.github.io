@@ -321,6 +321,13 @@
     font-size: 14px;
     /* 这里原本还有一条 opacity: 0.8 —— 半透明叠在底色上会把对比度再打八折，去掉 */
   }
+  /* EVA 机体编号配色（仅作用于三个板块 idx）：
+     00 = 零号机（琥珀黄）/ 01 = 初号机（紫罗兰）/ 02 = 二号机（绯红）。
+     用 #section .idx 的 id 优先级盖过上面的 .sec-head .idx 默认色，
+     这样 renumber() 改写数字文本也不会丢颜色。 */
+  #videos .idx   { color: #F5B301; }  /* 零号机 */
+  #photos .idx   { color: #9C6ADE; }  /* 初号机 */
+  #projects .idx { color: #E53935; }  /* 二号机 */
   .sec-head .line {
     flex: 1; height: 1px;
     background: linear-gradient(90deg, var(--border-strong), transparent);
@@ -834,7 +841,7 @@
 
   <section id="videos" class="container" aria-labelledby="videosH">
     <div class="sec-head">
-      <span class="idx">01</span><h2 id="videosH">视频</h2><span class="line"></span>
+      <span class="idx">00</span><h2 id="videosH">视频</h2><span class="line"></span>
     </div>
     <div class="vid-grid" id="videoGrid">
       <!-- 占位卡：数据到达前先拿同样尺寸的空壳把版面占住，避免「内容一到、整块重排」。
@@ -861,7 +868,7 @@
   <div class="pane-inner"><div class="pane-body">
   <section id="photos" class="container" aria-labelledby="photosH">
     <div class="sec-head">
-      <span class="idx">02</span><h2 id="photosH">摄影</h2><span class="line"></span>
+      <span class="idx">01</span><h2 id="photosH">摄影</h2><span class="line"></span>
     </div>
     <div class="ph-grid" id="photoGrid">
       <!-- 占位卡：和视频区一个道理 —— 数据到达前先把版面占住。
@@ -882,7 +889,7 @@
   <div class="pane-inner"><div class="pane-body">
   <section id="projects" class="container" aria-labelledby="projectsH">
     <div class="sec-head">
-      <span class="idx">03</span><h2 id="projectsH">项目</h2><span class="line"></span>
+      <span class="idx">02</span><h2 id="projectsH">项目</h2><span class="line"></span>
     </div>
     <div class="feat-grid">
       <article class="feat">
@@ -1127,7 +1134,7 @@
        所以编号统一由这里推导：跳过 [hidden] 的板块，从上往下连续编号。
        顺序以 DOM 为准（就是视觉顺序），不维护任何额外列表。 */
     function renumber() {
-      var n = 0;
+      var n = -1;   // 从 0 开始计数，首段即 00（EVA 机体编号风格：00/01/02）
       Array.prototype.forEach.call(
         document.querySelectorAll(".pane-body > section[id] > .sec-head > .idx"),
         function (el) {
