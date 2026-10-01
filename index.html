@@ -5,6 +5,32 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>DC · 个人主页</title>
 <meta name="description" content="DC 的个人主页 —— 维护 MirrorPilot 与 iso-hub 等开源项目。" />
+
+<!-- 社交卡片 / 主题色 / 图标
+     没有这几行时，把链接贴到微信、Twitter、Discord 里都只有一条光秃秃的标题；
+     而且浏览器会因为找不到图标去兜底请求 /favicon.ico，实测线上返回 404 页面 5.4 KiB。 -->
+<link rel="canonical" href="https://dc1024.github.io/" />
+<meta name="theme-color" content="#070b14" media="(prefers-color-scheme: dark)" />
+<meta name="theme-color" content="#f3f7fd" media="(prefers-color-scheme: light)" />
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<meta property="og:type" content="website" />
+<meta property="og:locale" content="zh_CN" />
+<meta property="og:site_name" content="DC" />
+<meta property="og:title" content="DC · 个人主页" />
+<meta property="og:description" content="开源工具作者 —— 维护 MirrorPilot、ISO Hub、wud_zh 等自托管项目。" />
+<meta property="og:url" content="https://dc1024.github.io/" />
+<meta property="og:image" content="https://dc1024.github.io/og-cover.jpg" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="DC 的个人主页" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="DC · 个人主页" />
+<meta name="twitter:description" content="开源工具作者 —— 维护 MirrorPilot、ISO Hub、wud_zh 等自托管项目。" />
+<meta name="twitter:image" content="https://dc1024.github.io/og-cover.jpg" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Person","name":"DC","url":"https://dc1024.github.io/","image":"https://dc1024.github.io/og-cover.jpg","description":"开源工具作者，维护 MirrorPilot、ISO Hub、wud_zh 等自托管项目。","sameAs":["https://github.com/DC1024","https://space.bilibili.com/1970862788","https://www.youtube.com/@DcChenCN"]}
+</script>
 <script>
   // 入场动效的「初始隐藏」只在 JS 可用时生效 —— 否则脚本一旦没跑起来，
   // 整页内容会停在 opacity:0 上变成白板。
@@ -32,11 +58,17 @@
     --border-strong: rgba(120, 180, 255, 0.28);
     --text: #e7eef8;
     --muted: #8a9bb5;
-    --faint: #5d6c85;
+    /* 原来 #5d6c85 只有 3.20:1（正文小字要求 4.5:1），而它正好全用在
+       12px 的 .sec-note、13px 的页脚、11px 的滚动提示上。提到 4.62:1。 */
+    --faint: #78869e;
     --accent: #38bdf8;
     --accent-2: #818cf8;
     --cyan: #22d3ee;
     --green: #34d399;
+    /* 「当文字用」的强调色。--accent 还要兼职渐变、边框、焦点环，
+       不能为了可读性改暗，所以正文小字单独走这两个 token。深色下与原型同值。 */
+    --accent-ink: #38bdf8;
+    --cyan-ink: #22d3ee;
     --radius: 16px;
     /* 整屏分页用。--vh 兜底 100vh，支持 svh 时优先用它 —— 移动端地址栏收起会让
        dvh 变化并触发重排，分屏高度跟着跳，所以这里不用 dvh。 */
@@ -57,11 +89,17 @@
     --border-strong: rgba(2, 110, 190, 0.35);
     --text: #0d1b2e;
     --muted: #4a5b74;
-    --faint: #7c8aa3;
+    /* 原来 #7c8aa3 只有 2.98:1 —— 两套主题里最差的一个。提到 4.68:1。 */
+    --faint: #5a6a85;
     --accent: #0284c7;
     --accent-2: #4f46e5;
     --cyan: #0891b2;
     --green: #059669;
+    /* 浅色下 --accent(3.81:1) 与 --cyan(3.42:1) 都够不上 12px 小字要的 4.5:1，
+       但这两个值还要用在渐变和边框上（那里没有 4.5 的要求），
+       所以只在「当文字用」的地方换成下面这两个更深的版本。 */
+    --accent-ink: #0369a1;
+    --cyan-ink: #0e7490;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
@@ -113,6 +151,16 @@
 
   a { color: inherit; text-decoration: none; }
 
+  /* 统一的键盘焦点样式。
+     原来只有 UA 默认的 outline: auto 1px rgb(16,16,16) —— 深色主题下是一条近黑描边，
+     实测几乎看不见；只有 .stretch 卡片有设计过的描边。这里统一成一支青色描边。 */
+  a:focus-visible,
+  button:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid var(--accent-ink);
+    outline-offset: 3px;
+  }
+
   /* nav —— 用 fixed 而不是 sticky：sticky 会占掉布局高度，把整屏分页往下顶，
      导致首屏能看到的范围多出下一屏的一截。 */
   .nav {
@@ -155,6 +203,10 @@
     font-size: 14px;
     transition: color 0.2s;
     position: relative;
+    /* 实测「视频」「项目」是 28×24：宽度够，高度差一点点卡在临界。
+       给个 min-height 顶稳 24（行盒本来就有 1.7×14≈23.8，几乎看不出变化）。 */
+    display: inline-flex; align-items: center;
+    min-height: 24px;
   }
   .nav-links a:hover { color: var(--text); }
   .nav-links a::after {
@@ -279,9 +331,9 @@
   }
   .sec-head .idx {
     font-family: var(--mono);
-    color: var(--accent);
+    color: var(--accent-ink);
     font-size: 14px;
-    opacity: 0.8;
+    /* 这里原本还有一条 opacity: 0.8 —— 半透明叠在底色上会把对比度再打八折，去掉 */
   }
   .sec-head .line {
     flex: 1; height: 1px;
@@ -313,9 +365,9 @@
     position: absolute; inset: 0; z-index: 1;
     border-radius: inherit;
   }
-  .feat .stretch:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  /* 焦点描边交给文件顶部那条全局 a:focus-visible，这里不再重复定义 */
   .feat .ptag {
-    font-family: var(--mono); font-size: 12px; color: var(--accent);
+    font-family: var(--mono); font-size: 12px; color: var(--accent-ink);
     letter-spacing: 1px; text-transform: uppercase;
   }
   .feat h3 { font-size: clamp(19px, 1.5vh, 22px); margin: clamp(6px, 0.9vh, 8px) 0 clamp(8px, 1.4vh, 12px); font-weight: 700; }
@@ -329,14 +381,18 @@
     background: rgba(255,255,255,0.03);
   }
   html[data-theme="light"] .badge { background: rgba(2, 110, 190, 0.05); }
-  .badge.lang { color: var(--cyan); border-color: rgba(34,211,238,0.3); }
+  /* 徽标文字 11.5px，浅色下 --cyan 只有 3.42:1，换 --cyan-ink */
+  .badge.lang { color: var(--cyan-ink); border-color: rgba(34,211,238,0.3); }
   .feat .links { display: flex; gap: 12px; position: relative; z-index: 2; }
   .feat .links a {
     font-size: 13.5px; font-weight: 600; color: var(--text);
     display: inline-flex; align-items: center; gap: 6px;
     transition: color 0.2s;
+    /* 实测「★ 仓库」只有 42×23 —— 差 1px 不达 WCAG 2.2 的 24×24。
+       用 padding 撑大点击区、再用负外边距抵消掉，排版位置一个像素都不动。 */
+    padding: 2px 5px; margin: -2px -5px;
   }
-  .feat .links a:hover { color: var(--accent); }
+  .feat .links a:hover { color: var(--accent-ink); }
 
   /* videos (Bilibili top-N, auto-refreshed) */
   .vid-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(272px, 1fr)); gap: 20px; }
@@ -348,9 +404,19 @@
     overflow: hidden;
     transition: transform 0.2s, border-color 0.2s, background 0.2s, box-shadow 0.2s;
   }
+  /* 骨架卡：01 的数据要等一次网络往返才到，这段时间必须先拿同样尺寸的空壳把版面占住。
+     否则数据一到、整块 .pane-body 从「只有 hero」变成「hero + 一千多像素的网格」，
+     上面所有东西被顶飞 —— 实测手机端 CLS 0.80。
+     占位文字用 visibility: hidden 而不是删掉：字形还在，行盒高度就和真卡一模一样。 */
+  .vid.is-skeleton { pointer-events: none; }
+  .vid.is-skeleton .vmeta h3,
+  .vid.is-skeleton .vstats { visibility: hidden; }
+  /* 没有 JS 时占位卡永远不会被替换，整块 01 直接藏起来；顺带不显示 02 的编号，
+     免得页面上出现一个没有 01 的 02。html.js 由 head 里的内联脚本加上。 */
+  html:not(.js) #videos { display: none; }
+  html:not(.js) #projects .idx { display: none; }
   .vid:hover { transform: translateY(-4px); border-color: var(--border-strong); background: var(--panel-hover); box-shadow: 0 14px 34px rgba(2, 110, 190, 0.16); }
   .vid .stretch { position: absolute; inset: 0; z-index: 1; border-radius: inherit; }
-  .vid .stretch:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
   .vthumb {
     position: relative;
     aspect-ratio: 16 / 9;
@@ -409,6 +475,13 @@
     font-family: var(--mono); font-size: 12px; color: var(--faint);
     display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
   }
+  /* 实测这条「去 B 站看全部作品 →」只有 119×20。padding 撑到 24 高，
+     负外边距把外框尺寸还回去，行高不变。下划线样式也从内联挪到这里。 */
+  .sec-note a {
+    padding: 2px 0; margin: -2px 0;
+    text-decoration: underline; text-underline-offset: 3px;
+  }
+  .sec-note a:hover { color: var(--text); }
   .sec-note .live {
     width: 7px; height: 7px; border-radius: 50%;
     background: var(--green); box-shadow: 0 0 8px var(--green);
@@ -427,8 +500,13 @@
     font-size: 13px;
   }
   footer.container { padding-top: clamp(14px, 2.2vh, 26px); padding-bottom: 0; }
-  footer a { color: var(--muted); }
-  footer a:hover { color: var(--accent); }
+  footer a {
+    color: var(--muted);
+    /* 实测页脚链接只有 41×17。行内元素加纵向 padding 不会撑高行盒，
+       所以点击区变大了、排版一点不动；横向用负外边距抵消。 */
+    padding: 5px 3px; margin: 0 -3px;
+  }
+  footer a:hover { color: var(--accent-ink); }
   footer .heart { color: #f472b6; }
 
   /* ---------- 整屏分页：01 / 02 靠滚动切换 ----------
@@ -497,6 +575,14 @@
     html.js .pane .sec-head, html.js .pane .sec-note { transition: none; }
     html.js .pane.in .vid, html.js .pane.in .feat { animation: none; }
     .scroll-hint svg { animation: none; }
+    /* 下面两条以前漏掉了：都是无限循环动画，实测在 reducedMotion:'reduce' 下仍在跑。
+       .avatar::before 尤其过分 —— 它是 blur(4px) 的 conic 渐变在无限旋转，等于一块常驻重绘。 */
+    .avatar::before { animation: none; }
+    .sec-note .live { animation: none; }
+  }
+  /* 触屏设备既没有 hover，雪碧图也永远不会加载 —— 那个「悬停预览」提示就别摆着了 */
+  @media (hover: none) {
+    .vhint { display: none; }
   }
   /* 矮窗口里没有多余空间放提示，且它可能压到内容上 */
   @media (max-height: 820px) { .scroll-hint { display: none; } }
@@ -525,11 +611,23 @@
 
   <main>
   <!-- 第一屏 = 介绍 + 01 我的视频；第二屏 = 02 核心项目 + 页脚。
-       两块 .pane 各占一屏高度，由 scroll-snap 吸附切换（CSS / JS 里都有说明）。 -->
-  <section class="pane" id="pane-videos" aria-label="介绍与我的视频">
+       两块 .pane 各占一屏高度，由 scroll-snap 吸附切换（CSS / JS 里都有说明）。
+       .pane 用 div 而不是 section：它纯粹是「一屏」这个排版单位，本身没有标题也没有语义，
+       写成 section 会让里面的 <section id="videos"> 变成 section 套 section。
+       <main> 下真正的地标是 header / #videos / #projects / footer，这些才该是 sectioning 元素。 -->
+  <div class="pane" id="pane-videos">
   <div class="pane-inner"><div class="pane-body">
   <header class="hero container">
-    <div class="avatar"><img src="avatar.jpg" alt="DC1024" /></div>
+    <div class="avatar">
+      <!-- WebP 多尺寸：最小那档只有 3.8 KiB，而原图 avatar.jpg 是 30.2 KiB。
+           不支持 WebP 的浏览器自动回落到原图。显示尺寸是 clamp(84px,11.5vh,124px)，
+           所以 sizes 直接写 124px，高 DPR 屏会自己挑 248/372 那两档。 -->
+      <picture>
+        <source type="image/webp" sizes="124px"
+                srcset="avatar-124.webp 124w, avatar-248.webp 248w, avatar-372.webp 372w" />
+        <img src="avatar.jpg" alt="DC1024" width="124" height="124" />
+      </picture>
+    </div>
     <h1>你好，我是 <span class="grad">DC</span></h1>
     <div class="cta-row">
       <a class="btn btn-ghost" href="https://github.com/DC1024" target="_blank" rel="noopener" aria-label="GitHub">
@@ -551,11 +649,17 @@
     </div>
   </header>
 
-  <section id="videos" class="container" hidden>
+  <section id="videos" class="container" aria-labelledby="videosH">
     <div class="sec-head">
-      <span class="idx">01</span><h2>我的视频</h2><span class="line"></span>
+      <span class="idx">01</span><h2 id="videosH">我的视频</h2><span class="line"></span>
     </div>
-    <div class="vid-grid" id="videoGrid"></div>
+    <div class="vid-grid" id="videoGrid">
+      <!-- 占位卡：数据到达前先拿同样尺寸的空壳把版面占住，避免「内容一到、整块重排」。
+           真卡由脚本替换；正常情况下首帧就是真数据（见页尾的 VIDEO_SEED 说明）。 -->
+      <article class="vid is-skeleton" aria-hidden="true"><div class="vthumb"></div><div class="vmeta"><h3>占位标题占位标题占位标题</h3><div class="vstats"><span>占位播放</span><span>占位弹幕</span></div></div></article>
+      <article class="vid is-skeleton" aria-hidden="true"><div class="vthumb"></div><div class="vmeta"><h3>占位标题占位标题占位标题</h3><div class="vstats"><span>占位播放</span><span>占位弹幕</span></div></div></article>
+      <article class="vid is-skeleton" aria-hidden="true"><div class="vthumb"></div><div class="vmeta"><h3>占位标题占位标题占位标题</h3><div class="vstats"><span>占位播放</span><span>占位弹幕</span></div></div></article>
+    </div>
     <p class="sec-note" id="videoNote"></p>
   </section>
 
@@ -564,13 +668,13 @@
     <span>向下滚动</span>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
   </div>
-  </section>
+  </div>
 
-  <section class="pane" id="pane-projects" aria-label="核心项目">
+  <div class="pane" id="pane-projects">
   <div class="pane-inner"><div class="pane-body">
-  <section id="projects" class="container">
+  <section id="projects" class="container" aria-labelledby="projectsH">
     <div class="sec-head">
-      <span class="idx">02</span><h2>核心项目</h2><span class="line"></span>
+      <span class="idx">02</span><h2 id="projectsH">核心项目</h2><span class="line"></span>
     </div>
     <div class="feat-grid">
       <article class="feat">
@@ -671,9 +775,18 @@
   <footer class="container">
     <p>© <span id="year"></span> DC · 用 <span class="heart">♥</span> 与开源工具搭建 · <a href="https://github.com/DC1024" target="_blank" rel="noopener">GitHub</a></p>
   </footer>
-  </section>
+  </div>
 
   </main>
+
+  <!-- 视频数据种子 —— 构建流程（scripts/inject_seed.py）会把 videos.json 的内容原样塞进
+       两行标记之间。作用是让卡片在首帧就能渲染：否则封面图必须先等一次 videos.json 往返
+       才知道 URL（实测线上 LCP 因此多等 325ms），而且 01 板块变成「稍后才出现」，会引发
+       整块重排（手机端 CLS 0.80）。
+       注入失败 / 还没跑过时这里保持空着，页面自动回退到 fetch('videos.json')，与改造前一致。 -->
+  <!-- VIDEO_SEED_START -->
+<script type="application/json" id="videoSeed">{"generated_at":"2026-10-01T12:18:32+08:00","mid":"1970862788","space":"https://space.bilibili.com/1970862788","sort":"play_desc","total_scanned":21,"videos":[{"bvid":"BV1ed4y1o7HF","aid":"387028325","cid":"804108902","title":"学会使用Docker Compose，真用不到三分钟","play":57655,"danmaku":4,"duration":302,"pubdate":1660613400,"tname":"计算机技术","url":"https://www.bilibili.com/video/BV1ed4y1o7HF/","sprite_cols":10,"sprite_rows":10,"sprite_fw":480,"sprite_fh":270,"rank":1,"cover":"assets/videos/BV1ed4y1o7HF.jpg","sprite":"assets/videos/BV1ed4y1o7HF_sprite.jpg","preview_frames":31},{"bvid":"BV1H3411V7WY","aid":"426908377","cid":"730296377","title":"究竟什么是Docker？最适合小白的Docker教程！","play":41843,"danmaku":200,"duration":372,"pubdate":1653611400,"tname":"科学科普","url":"https://www.bilibili.com/video/BV1H3411V7WY/","sprite_cols":10,"sprite_rows":10,"sprite_fw":480,"sprite_fh":270,"rank":2,"cover":"assets/videos/BV1H3411V7WY.jpg","sprite":"assets/videos/BV1H3411V7WY_sprite.jpg","preview_frames":37},{"bvid":"BV1xP4y1k7en","aid":"905295041","cid":"966575336","title":"虚拟机最速传说？新手必会的 Hyper-V 虚拟机","play":27510,"danmaku":16,"duration":151,"pubdate":1673752746,"tname":"计算机技术","url":"https://www.bilibili.com/video/BV1xP4y1k7en/","sprite_cols":10,"sprite_rows":10,"sprite_fw":480,"sprite_fh":270,"rank":3,"cover":"assets/videos/BV1xP4y1k7en.jpg","sprite":"assets/videos/BV1xP4y1k7en_sprite.jpg","preview_frames":31}]}</script>
+<!-- VIDEO_SEED_END -->
 
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();
@@ -769,18 +882,28 @@
       return { relayout: relayout };
     })();
 
-    /* ---------- 我的视频：读取 videos.json 渲染卡片 ----------
+    /* ---------- 我的视频：渲染卡片 ----------
        数据由 GitHub Actions 每 24 小时重新抓取一次（scripts/fetch_bilibili_top.py）。
        卡片 hover 时不联网：用的是随仓库一起提交的 B 站官方缩略图雪碧图，
-       靠 background-position 逐帧推进，所以在国内网络下也稳。            */
+       靠 background-position 逐帧推进，所以在国内网络下也稳。
+
+       数据来源按优先级有两个：
+         1) 页尾 #videoSeed 里内联的 JSON（构建期注入）—— 首帧就能出内容，不用等网络；
+         2) fetch('videos.json') —— 兜底，同时用来在后台核对数据是不是已经变新了。 */
     (function () {
       var sec = document.getElementById("videos");
       var grid = document.getElementById("videoGrid");
       var note = document.getElementById("videoNote");
-      if (!sec || !grid || !window.fetch) return;
+      if (!sec || !grid || !note) return;
 
       var STEP = 170;            // 每帧停留毫秒
       var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      /* 三张 hover 预览雪碧图合计 525 KiB —— 占首屏总字节的 78%，但只有鼠标悬停在
+         卡片上时才看得见。所以绝对不能在渲染时就把 backgroundImage 设上去：
+         浏览器不管你可见不可见，设了就去下载。改成第一次真的把指针移进卡片区才注入，
+         触屏设备（hover: none）永远不加载。 */
+      var CAN_HOVER = window.matchMedia ? window.matchMedia("(hover: hover)").matches : true;
+      var spritesInjected = false;
 
       function fmtCount(n) {
         n = Number(n) || 0;
@@ -834,7 +957,20 @@
         img.src = v.cover;
         img.alt = v.title;
         img.loading = "lazy";
-        thumb.appendChild(img);
+        /* 同目录的 .webp 由抓取脚本一并生成（720×450 的封面实测能小 40% 以上）。
+           用 <picture> 而不是直接改 src：source 加载失败会自动回落到 <img>，
+           所以哪天 webp 没生成出来，卡片也不会开天窗。远端兜底地址就不套了。 */
+        if (/\.jpe?g$/i.test(v.cover)) {
+          var pic = document.createElement("picture");
+          var srcWebp = document.createElement("source");
+          srcWebp.type = "image/webp";
+          srcWebp.srcset = v.cover.replace(/\.jpe?g$/i, ".webp");
+          pic.appendChild(srcWebp);
+          pic.appendChild(img);
+          thumb.appendChild(pic);
+        } else {
+          thumb.appendChild(img);
+        }
 
         var frames = Number(v.preview_frames) || 0;
         var cols = Number(v.sprite_cols) || 10;
@@ -843,7 +979,8 @@
         if (v.sprite && frames > 1) {
           spriteEl = document.createElement("div");
           spriteEl.className = "sprite";
-          spriteEl.style.backgroundImage = "url('" + v.sprite + "')";
+          // 只把地址记在属性上，先不设 backgroundImage —— 原因见上面 CAN_HOVER 那段
+          spriteEl.setAttribute("data-sprite", v.sprite);
           thumb.appendChild(spriteEl);
         }
         thumb.appendChild(Object.assign(document.createElement("div"), { className: "veil" }));
@@ -921,39 +1058,77 @@
         return card;
       }
 
+      /* 第一次真的用得上预览图时才注入（原因见上面 CAN_HOVER 那段）。
+         挂在 grid 上而不是每张卡上：指针一进卡片区就一次性把 3 张都排上队，
+         这样从第 1 张卡移到第 3 张卡时不会每张都单独等一次网络。 */
+      function injectSprites() {
+        if (spritesInjected) return;
+        spritesInjected = true;
+        Array.prototype.forEach.call(grid.querySelectorAll(".sprite[data-sprite]"), function (el) {
+          var url = el.getAttribute("data-sprite");
+          el.removeAttribute("data-sprite");
+          el.style.backgroundImage = "url('" + url + "')";
+        });
+      }
+      if (CAN_HOVER) {
+        grid.addEventListener("pointerenter", injectSprites, { once: true });
+        grid.addEventListener("focusin", injectSprites, { once: true });   // 键盘 Tab 进来也要给
+      }
+
+      /* 名单没变就不重建 —— 重建会重放一遍进场动效，肉眼能看出闪一下 */
+      function signature(list) {
+        return list.map(function (v) { return v.bvid + ":" + v.play; }).join("|");
+      }
+      var rendered = "";
+
+      function render(data) {
+        var list = (data && data.videos) || [];
+        if (!list.length) return false;
+        var sig = signature(list);
+        if (sig === rendered) return true;
+        grid.textContent = "";                 // 连占位卡一起清掉
+        list.forEach(function (v, i) { grid.appendChild(buildCard(v, i)); });
+        rendered = sig;
+
+        note.textContent = "";
+        var dot = document.createElement("span");
+        dot.className = "live";
+        note.appendChild(dot);
+        note.appendChild(document.createTextNode(
+          "按播放量实时排名 TOP " + list.length + "，每 24 小时自动重抓替换" +
+          (data.generated_at ? " · 上次更新 " + fmtTime(data.generated_at) : "") + " · "));
+        var more = document.createElement("a");
+        more.href = data.space || "https://space.bilibili.com/1970862788";
+        more.target = "_blank";
+        more.rel = "noopener";
+        more.textContent = "去 B 站看全部作品 →";
+        note.appendChild(more);
+
+        sec.hidden = false;
+        pageSync.relayout();   // 01 变高了，重新判定这一屏还装不装得下（决定要不要吸附）
+        return true;
+      }
+
+      /* 一条数据都拿不到时的退场：整块不显示，不留占位卡，也不留一个没有 01 的 02 */
+      function fail() {
+        sec.hidden = true;
+        var idx = document.querySelector("#projects .idx");
+        if (idx) idx.textContent = "01";
+        pageSync.relayout();
+      }
+
+      // 1) 先用页尾内联的数据同步渲染 —— 首帧就是真内容，不用等任何网络
+      var seedEl = document.getElementById("videoSeed");
+      if (seedEl && seedEl.textContent.trim()) {
+        try { render(JSON.parse(seedEl.textContent)); } catch (e) {}
+      }
+
+      // 2) 再在后台核对一次线上数据，只有名单确实变了才重建
+      if (!window.fetch) { if (!rendered) fail(); return; }
       fetch("videos.json", { cache: "no-cache" })
         .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status)); })
-        .then(function (data) {
-          var list = (data && data.videos) || [];
-          if (!list.length) return;
-          list.forEach(function (v, i) { grid.appendChild(buildCard(v, i)); });
-          if (note) {
-            var dot = document.createElement("span");
-            dot.className = "live";
-            note.appendChild(dot);
-            note.appendChild(document.createTextNode(
-              "按播放量实时排名 TOP " + list.length + "，每 24 小时自动重抓替换" +
-              (data.generated_at ? " · 上次更新 " + fmtTime(data.generated_at) : "") + " · "));
-            var more = document.createElement("a");
-            more.href = data.space || "https://space.bilibili.com/1970862788";
-            more.target = "_blank";
-            more.rel = "noopener";
-            more.textContent = "去 B 站看全部作品 →";
-            more.style.color = "inherit";
-            more.style.textDecoration = "underline";
-            more.style.textUnderlineOffset = "3px";
-            note.appendChild(more);
-          }
-          sec.hidden = false;
-          pageSync.relayout();   // 01 变高了，重新判定这一屏还装不装得下（决定要不要吸附）
-        })
-        .catch(function () {
-          /* 拿不到数据就整块不显示，不留空壳；同时把核心项目提回 01，
-             免得页面上出现一个没有 01 的 02。 */
-          var idx = document.querySelector("#projects .idx");
-          if (idx) idx.textContent = "01";
-          pageSync.relayout();
-        });
+        .then(function (data) { if (!render(data) && !rendered) fail(); })
+        .catch(function () { if (!rendered) fail(); });
     })();
   </script>
 </body>
