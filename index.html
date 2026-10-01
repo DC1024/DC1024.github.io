@@ -569,24 +569,9 @@
     content: ""; position: absolute; inset: 0; pointer-events: none;
     background: linear-gradient(180deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,0) 70%, rgba(0,0,0,0.42) 100%);
   }
-  .ph-meta {
-    display: flex; align-items: baseline; gap: 8px;
-    padding: 11px 13px 12px;
-  }
-  .ph-meta h3 {
-    flex: 1; min-width: 0;
-    margin: 0;
-    font-size: 14.5px; font-weight: 600; line-height: 1.35;
-    color: var(--text);
-    /* 标题最多两行，超了省略 —— 卡片高度才会一致 */
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  .ph-place {
-    flex: none;
-    font-family: var(--mono); font-size: 11.5px; color: var(--muted);
-    white-space: nowrap;
-  }
+  /* 卡片只有图，没有 .ph-meta —— 用户明确要求不放标题/地点/日期/EXIF。
+     所以 .ph 是 button 且只含 .ph-thumb，缩略图的 alt 与 aria-label 承担
+     无障碍名称（见渲染代码），视觉上就是纯图片块。 */
 
   /* 灯箱：点开看大图。中图先在卡片尺寸上就位（有内容、不闪），
      大图在后台悄悄换上来 —— 直接上 2560 会让点开那一刻白一下。 */
@@ -888,10 +873,11 @@
     </div>
     <div class="ph-grid" id="photoGrid">
       <!-- 占位卡：和视频区一个道理 —— 数据到达前先把版面占住。
-           缩略图比例固定 4:3（见 CSS .ph-thumb），所以空壳和真卡一样高。 -->
-      <article class="ph is-skeleton" aria-hidden="true"><div class="ph-thumb"></div><div class="ph-meta"><h3>占位标题占位标题</h3><span class="ph-place">占位</span></div></article>
-      <article class="ph is-skeleton" aria-hidden="true"><div class="ph-thumb"></div><div class="ph-meta"><h3>占位标题占位标题</h3><span class="ph-place">占位</span></div></article>
-      <article class="ph is-skeleton" aria-hidden="true"><div class="ph-thumb"></div><div class="ph-meta"><h3>占位标题占位标题</h3><span class="ph-place">占位</span></div></article>
+           结构和真卡严格一致（只有一个 4:3 的 .ph-thumb，没有文字区），
+           否则空壳与真卡高度不同，替换那一瞬间会跳一下。 -->
+      <article class="ph is-skeleton" aria-hidden="true"><div class="ph-thumb"></div></article>
+      <article class="ph is-skeleton" aria-hidden="true"><div class="ph-thumb"></div></article>
+      <article class="ph is-skeleton" aria-hidden="true"><div class="ph-thumb"></div></article>
     </div>
     <p class="sec-note" id="photoNote"></p>
   </section>
