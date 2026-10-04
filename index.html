@@ -532,6 +532,10 @@
      390px 下约 169px，缩略图够看，也比单列少滚一半）；只有 359px 以下的
      小屏（iPhone SE 320 这类）才真正窄到放不下两列，退回单列。 */
   @media (max-width: 359px) {
+    /* 小屏真的放不下两列。注意：视频 / 项目的单列回退不写在这里 ——
+       这条在源码里位于后面那个 @media (max-width: 760px) 之前，
+       同优先级下会被后者盖掉（实测 320px 下视频仍是两列）。
+       它们的回退统一放到样式表末尾的 359 块里。 */
     .ph-grid { grid-template-columns: 1fr; }
   }
 
@@ -783,7 +787,12 @@
   @media (max-height: 820px) { .scroll-hint { display: none; } }
 
   @media (max-width: 760px) {
-    .feat-grid { grid-template-columns: 1fr; }
+    /* 视频 / 项目原先在手机上都是 1 列大卡，和摄影区的两列观感不一致（用户反馈「太大」）。
+       这里跟着摄影区一起降到两列；gap 也跟 .ph-grid 对齐成 12px。
+       注意：这两类卡带文字（标题/简介/徽章/统计行），不像照片纯图片那么耐挤 ——
+       卡片内部要同步收紧（见后面「卡片内部收紧」那段），否则文字和统计行会被挤爆。 */
+    .vid-grid,
+    .feat-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
     .nav-links { gap: 10px; }
   }
 
@@ -824,6 +833,30 @@
        收窄内边距 + 间距后实测变 2 行，高度仍有 ~48px，没掉下 44 的下限。 */
     .cta-row { gap: 10px; }
     .btn { padding: 11px 16px; }
+  }
+
+  /* 卡片内部收紧：视频 / 项目降到两列后，每张卡的内容宽只剩 130px 上下
+     （390px 屏：169 卡宽 − 2×20 内边距），而原来的 padding / 字号 / 间距
+     都是按「1 列大卡」定的 —— 不收会把标题、徽章和统计行挤爆。 */
+  @media (max-width: 760px) {
+    .feat { padding: 14px; }
+    /* 长英文项目名（PrinterStatusGuard / Answer Sheet Builder）在 126px 的内容宽里
+       不会断行，会把卡片撑破（实测 .feat 内溢 7~15px）—— 必须允许任意位置断行。
+       字号不再往下压：17px 已是「不孤字」的底线，靠断行解决而不是靠缩小。 */
+    .feat h3 { font-size: 17px; overflow-wrap: anywhere; }
+    .feat p { font-size: 13.5px; overflow-wrap: anywhere; }
+    .badges { gap: 6px; }
+    .vmeta { padding: 12px 10px 13px; }
+    .vmeta h3 { font-size: 14.5px; min-height: 44px; margin-bottom: 8px; }
+    /* 统计行原本在两列下内溢 10px（二维码会被卡片的 overflow:hidden 裁掉半截）。
+       靠收窄 gap + 内边距解决，字号保持 12px 不降到可读性下限以下。 */
+    .vstats { gap: 6px; }
+    .vstats svg { width: 12px; height: 12px; }
+  }
+
+  /* 视频 / 项目的「两列 → 单列」回退必须放在所有 760 块之后，否则被盖掉 */
+  @media (max-width: 359px) {
+    .vid-grid, .feat-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
