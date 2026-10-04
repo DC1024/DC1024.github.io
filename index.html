@@ -526,7 +526,12 @@
     /* 手机上三列每张才 110px 左右，太窄了。降成两列，只在最小的屏上才一列。 */
     .ph-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   }
-  @media (max-width: 420px) {
+  /* 这里原来是 420px，结果 390（iPhone 14 这类主流机型）退成单列大图、
+     而 430（Pro Max）还是两列 —— 只差 40px 观感却完全不同。
+     主流手机宽度集中在 360~430，统统给两列（实测 360px 下每张约 154px、
+     390px 下约 169px，缩略图够看，也比单列少滚一半）；只有 359px 以下的
+     小屏（iPhone SE 320 这类）才真正窄到放不下两列，退回单列。 */
+  @media (max-width: 359px) {
     .ph-grid { grid-template-columns: 1fr; }
   }
 
