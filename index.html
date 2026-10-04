@@ -472,6 +472,24 @@
   .vstats { display: flex; align-items: center; gap: 15px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
   .vstats span { display: inline-flex; align-items: center; gap: 5px; }
   .vstats svg { width: 13px; height: 13px; opacity: 0.85; }
+  /* 统计行按「这张卡实际有多宽」自适应，用容器查询而不是媒体查询 ——
+     同一个视口里首卡跨整行（内容宽 ~328px）、2/3 号卡只有一半宽（~149px），
+     媒体查询区分不了它们。窄卡上「图标 + 数字 + 播放/弹幕」两项本身就要 150px，
+     还要再挤进 26px 的二维码按钮，于是文字被逐字拆行（实测截图里「播 / 放」「弹 / 幕」
+     各占一行）。所以只在窄卡里把单位标签收起来、留「图标 + 数字」——图标本身已表意，
+     一行 100px 就宽松放下；宽卡（跨整行的首卡、平板两列、桌面）标签照常显示。
+     阈值 210px 落在两个实测值之间：窄卡 149、桌面最小列 255（minmax(272px) − 2×内边距）。
+     用 sr-only 手法而非 display:none：屏幕阅读器仍能读到「5.8万 播放」，信息不丢。
+     .vqr 自带 position:relative，所以容器查询引入的 contain:layout 不会影响二维码弹层定位。 */
+  .vmeta { container-type: inline-size; }
+  @container (max-width: 210px) {
+    .vstats > span { position: relative; }
+    .vstat-lbl {
+      position: absolute; width: 1px; height: 1px;
+      margin: 0; padding: 0; border: 0;
+      overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+    }
+  }
   /* 分享二维码：播放/弹幕右侧那个小按钮，悬停（或键盘聚焦）就弹出二维码。
      面板刻意用白底 —— 二维码必须是深色模块压浅色底，如果让它跟着深色主题的面板走，
      就等于把码画在深色上，扫描器基本读不出来。
@@ -1442,14 +1460,22 @@
         meta.appendChild(h3);
         var stats = document.createElement("div");
         stats.className = "vstats";
-        var s1 = document.createElement("span");
-        s1.appendChild(svg(IC_PLAY));
-        s1.appendChild(document.createTextNode(fmtCount(v.play) + " 播放"));
-        stats.appendChild(s1);
-        var s2 = document.createElement("span");
-        s2.appendChild(svg(IC_DM));
-        s2.appendChild(document.createTextNode(fmtCount(v.danmaku) + " 弹幕"));
-        stats.appendChild(s2);
+        /* 「播放 / 弹幕」两个单位标签各自包一层 .vstat-lbl：两列手机档的卡片只有 169px，
+           去掉内边距后统计行只剩 ~147px，而「图标 + 数字 + 标签」两项本身就要 ~150px，
+           再挤进 26px 的二维码按钮就只能逐字拆行（实测截图里出现「播 / 放」「弹 / 幕」）。
+           窄卡下把标签视觉隐藏、只留「图标 + 数字」（图标已表意），宽卡照常显示 —— 见 CSS。 */
+        var stat = function (icon, value, label) {
+          var el = document.createElement("span");
+          el.appendChild(svg(icon));
+          el.appendChild(document.createTextNode(fmtCount(value)));
+          var lb = document.createElement("span");
+          lb.className = "vstat-lbl";
+          lb.textContent = label;
+          el.appendChild(lb);
+          return el;
+        };
+        stats.appendChild(stat(IC_PLAY, v.play, "播放"));
+        stats.appendChild(stat(IC_DM, v.danmaku, "弹幕"));
 
         /* 分享二维码：按播放量排在播放/弹幕右侧。悬停（或键盘聚焦）弹出，
            触摸屏没有 hover，所以按钮点击也能切换 —— 否则手机上它就是个死按钮。 */
