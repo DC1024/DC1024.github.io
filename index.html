@@ -781,6 +781,45 @@
     .feat-grid { grid-template-columns: 1fr; }
     .nav-links { gap: 10px; }
   }
+
+  /* —— 移动端 / 触屏适配 ——
+     依据 check-mobile.cjs 在 320/360/375/390/414/480/600/760/820 九档的实测：
+     横向溢出全为 0、栅格降级正常，所以不用动布局；真正的缺陷集中在两处——
+       ① 触控目标偏小：导航板块链接 28×24、主题切换 38×38、视频二维码按钮 26×26，
+          都低于 44px 的触控下限（手指点不准）
+       ② 封面叠加小字 .vrank/.vdur/.vhint 只有 11~11.5px，手机上偏挤
+     触屏用 (hover: none) 判定：窄窗口 + 鼠标的用户不受影响，桌面观感不变。
+     导航变高不会压住内容 —— --nav-h 由 JS 实测 nav 高度后写入（见脚本）。 */
+
+  /* iOS 横竖屏切换会自作主张放大字号，锁住；顺带去掉点击时的灰色高亮块 */
+  html { -webkit-text-size-adjust: 100%; }
+  a, button { -webkit-tap-highlight-color: transparent; }
+
+  @media (hover: none) {
+    /* 导航链接：盒高顶到 44、左右 padding 撑到 44。
+       下划线 ::after 原本 bottom:-6px 是相对 24px 高的盒子算的，
+       盒子变高后要往里收，否则它会被 padding 顶到离文字很远的地方。 */
+    .nav-links a { min-height: 44px; padding: 0 8px; }
+    .nav-links a::after { bottom: 6px; }
+    /* 主题切换：38 → 44 */
+    .theme-toggle { width: 44px; height: 44px; }
+    /* 二维码按钮：视觉保持 26（在统计行里放大到 44 会显得笨重），
+       改用 ::after 铺一层透明的 44×44 命中区 —— 肉眼无变化，手指点得到。 */
+    .vqr-btn { position: relative; }
+    /* inset 是相对「padding box」算的，1px 边框两边各吃掉 1px，
+       所以 -9px 实测只有 41（24+18），要 -10px 才够 44（24+20）。 */
+    .vqr-btn::after { content: ""; position: absolute; inset: -11px; }
+  }
+
+  /* 叠加小字 / 徽标 / 提示文字统一提到 12px（原本 11~11.5，手机上偏挤） */
+  .vrank, .vdur, .vhint, .scroll-hint, .badge { font-size: 12px; }
+
+  @media (max-width: 480px) {
+    /* 6 个社交按钮原本在手机上占 3 行，首屏纵向吃紧；
+       收窄内边距 + 间距后实测变 2 行，高度仍有 ~48px，没掉下 44 的下限。 */
+    .cta-row { gap: 10px; }
+    .btn { padding: 11px 16px; }
+  }
 </style>
 </head>
 <body>
