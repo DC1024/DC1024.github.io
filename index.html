@@ -858,6 +858,37 @@
   @media (max-width: 359px) {
     .vid-grid, .feat-grid { grid-template-columns: 1fr; }
   }
+
+  /* 奇数张视频排两列时，最后一张会独占一行、右边空出一格。
+     让第 1 张横跨两列做成「重点推荐」，其余两两并排 —— 空格消掉。
+     方向选横向而不是竖向：.vthumb 是固定 16:9 + object-fit:cover，
+     横向拉长（如 390px 视口下 348×196）正好是原生比例、不裁画面；
+     竖向拉高的话 aspect-ratio 仍按 169×95 算，卡片下方会空出一大块。
+     限定 min-width:360px：≤359px 是单列，span 2 会凭空撑出第二列。 */
+  @media (min-width: 360px) and (max-width: 760px) {
+    .vid:first-child { grid-column: span 2; }
+  }
+
+  /* 平板竖屏（761~950px）同样是两列，一样会留空格，一并处理。
+     这里显式写死 repeat(2, 1fr) 而不是靠 auto-fit 推算，目的是让「列数 = 2」成为确定事实：
+     span 2 只有在两列下才等于「占满整行」，若容器宽度悄悄变成三列，它会变成占 2/3、反而更乱。
+     上界 950 是实测值：容器宽 = 3×272 + 2×20 = 856px 时 auto-fit 才会切三列，对应视口约 951px。 */
+  @media (min-width: 761px) and (max-width: 950px) {
+    .vid-grid { grid-template-columns: repeat(2, 1fr); }
+    .vid:first-child { grid-column: span 2; }
+  }
+
+  /* 视频由 GitHub Action 定期刷新，条数会变。上面的规则只在「奇数张」时才消得掉空格：
+     若是 4 张，第 1 张跨两列后剩下 3 张，最后一张又会独占一格 —— 等于没修，还更乱。
+     所以偶数张时把第 1 张还原成普通卡，让它老老实实两两铺满。
+     判奇偶的技巧：总数 N 时首卡的 nth-last-child 序号正好是 N，所以
+     「首卡是倒数第偶数个」⇔ 总数为偶数。一条规则覆盖 2/4/6/8 张，不用逐个枚举。
+     :has() 不被支持时整条规则静默失效，退回上面的 span 2 —— 偶数张会留个空格，但不会崩。 */
+  @media (min-width: 360px) and (max-width: 950px) {
+    .vid-grid:has(> .vid:first-child:nth-last-child(2n)) .vid:first-child {
+      grid-column: span 1;
+    }
+  }
 </style>
 </head>
 <body>
