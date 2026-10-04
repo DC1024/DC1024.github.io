@@ -725,9 +725,10 @@
   html.js .pane:not(.ready) > .scroll-hint { visibility: hidden; }
   /* 分屏内的板块不再需要自己的上下留白，垂直位置由分屏居中决定 */
   .pane #videos, .pane #photos, .pane #projects { padding-top: 0; padding-bottom: 0; }
-  /* 吸附默认不开：只有 JS 判定「每一屏都装得进视口」时才加 .snap。
-     mandatory 一旦碰到比视口高的分屏，会把超出的那一截永久卡在屏外，
-     读不到也滚不出来（矮屏笔记本 / 手机就是这样）。 */
+  /* .snap 由 JS 在分屏脚本初始化时加上（见 pageSync.syncSnap）。
+     早期版本只在「每一屏都装得进视口」时才加，怕 mandatory 把超高屏的内容卡在屏外；
+     2026-10-05 实测证明不会（项目屏高出视口 1080px 时仍能停在其间、仍能滚到底），
+     而关掉吸附会让「滑一下翻一屏」彻底消失，所以改成无条件开启。 */
   html.snap { scroll-snap-type: y mandatory; }
 
   /* 第一屏底部的滚动提示；开始滚动后收起 */
@@ -1217,18 +1218,27 @@
       }
 
       function syncSnap() {
-        // 只有「每一屏都装得进视口」才开吸附。mandatory 碰到比视口高的分屏时，
-        // 会把超出的那一截永久卡在屏外 —— 读不到，也滚不出来。所以只要有一屏装不下，
-        // 就退回普通滚动（此时首屏仍然是满屏，只是没有吸附切换）。
-        // 末屏因为按底边吸附（见 CSS），容差可以放宽到几像素用来抹平取整误差。
+        // 这里原本是「只要有一屏装不下就整站关掉吸附」，理由是 mandatory 会把超高屏
+        // 多出来的那一截永久卡在屏外。2026-10-05 实测（Chromium，390×844，项目屏高出
+        // 视口 1080px）证明并不会：停在超高屏中间能停住（2385）、滚到文档末尾能到底
+        // （3035）。真正会卡死的反倒是「把超高屏排除出吸附」——给它
+        // scroll-snap-align:none 之后，mandatory 会强制吸回仅剩的那个 target，
+        // 实测被吸回 1111、第三屏整整 1924px 完全滚不到。所以正确做法是照常开。
+        //
+        // 手感对比（停在第二屏顶 1111 下滑，第三屏顶 1955）：
+        //   none（原行为）  滑 200/450/700 → 全部停在中间，分页感彻底消失 ← 用户反馈的问题
+        //   proximity       滑 200 → 吸回、450 → 停中间、700 → 翻页（时灵时不灵）
+        //   mandatory       滑 200 → 吸回、450/700 → 精确落到 1955（分页感明确）
+        // 只有 mandatory 能还原「滑一下翻一屏」，所以这里无条件开启。
+        //
+        // 装不下这件事仍然记下来：标到 data-over 上，供样式做微调，不再用来关吸附。
         const vh = window.innerHeight;
-        const last = panes.length - 1;
-        let fits = true;
         for (let i = 0; i < panes.length; i++) {
           const over = panes[i].scrollHeight - vh;
-          if (over > (i === last ? 6 : 2)) { fits = false; break; }
+          if (over > 6) panes[i].setAttribute("data-over", over);
+          else panes[i].removeAttribute("data-over");
         }
-        root.classList.toggle("snap", fits);
+        root.classList.add("snap");
       }
 
       function updateActive() {
