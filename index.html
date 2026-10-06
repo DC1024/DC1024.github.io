@@ -780,7 +780,7 @@
      项目加到 9 张后，第 7~9 张（第三排）落不到任何一条规则，只能拿到默认的 0s 延迟：
      它们会在「项目屏刚进场」那一瞬间最先开跑，而那一刻它们还在视口之外
      （项目屏本身比视口高一大截），等真正滚到第三排时动画早播完了，看着就像没有动画。
-     改成每张卡滚进自己视口时才触发，同一排内按列序错开，逻辑见文末 revealFeat。 */
+     改成每张卡滚进自己视口时才触发，进场时以「排」为单位错开，逻辑见文末 revealFeat。 */
   html.js .feat.pending { opacity: 0; }
   html.js .feat.reveal { animation: cardIn 0.5s cubic-bezier(0.22, 0.61, 0.36, 1) backwards; }
 
@@ -1903,7 +1903,8 @@
        这里改为：
          - 「哪些卡在同一排」用 offsetTop 判定，跟着栅格实际排出来的行列走，
            1 列 / 2 列 / 3 列都成立，不用再把 nth-child 一路往下写；
-         - 排内按 DOM 顺序（即列序）每张错开 60ms；
+         - 进场时以「排」为单位错开（每排 120ms，排内同时），
+           这才是「第一排 → 第二排 → 第三排」一排排连缀的来源；
          - IntersectionObserver 在卡片真的进入视口时才加 .reveal，划走后复位以便回来重播。 */
     (function revealFeat() {
       var grids = document.querySelectorAll(".feat-grid");
@@ -1922,30 +1923,61 @@
 
       cards.forEach(function (c) { c.classList.add("pending"); });
 
+      /* 记下每张卡的「第几排 + 第几列」，延迟不在这里定，留给进场时按批次算
+         （见下面 observer）。排 / 列由栅格实际排出来的 offsetTop 决定，
+         1 列 / 2 列 / 3 列都不用改，也不需要再把 nth-child 一路往下写。 */
+      var meta = [];
       function layout() {
         var seen = {};
-        cards.forEach(function (c) {
+        meta = cards.map(function (c) {
           var row = Math.round(c.offsetTop);
           var col = seen[row] || 0;
-          c.style.animationDelay = (col * 60) + "ms";
           seen[row] = col + 1;
+          return { el: c, row: row, col: col };
         });
+      }
+      function info(el) {
+        for (var i = 0; i < meta.length; i++) if (meta[i].el === el) return meta[i];
+        return { row: 0, col: 0 };
       }
       layout();
       window.addEventListener("resize", layout, { passive: true });
 
       var io = new IntersectionObserver(function (entries) {
-        entries.forEach(function (e) {
-          var c = e.target;
-          if (!e.isIntersecting) {
-            c.classList.remove("reveal");
-            c.classList.add("pending");          // 划走了就复位，回头还能重播
-            return;
-          }
+        /* 同一批进场的卡按「先排后列」的阅读顺序排好，再逐个错开 60ms ——
+           这就是「第一排 → 第二排 → 第三排」一排排连缀的来源。
+           不能在每张卡进场时各自从 0ms 重新起算：那样多排同时可见时三排会一起开跑，
+           视觉上就成了沿列往下扫（用户反馈的「现在是按列的」）。
+           也不能按全局序号写死：单独一排滚进来时不该白等前面几排的时间。
+           所以按「当前这一批」排序号，只在批次内累加。 */
+        var entering = entries
+          .filter(function (e) { return e.isIntersecting; })
+          .map(function (e) { return e.target; });
+
+        /* 以「排」为单位错开：同一排的卡拿同一个延迟，整排作为一个整体浮现。
+           不能在排内再按列错开 60ms —— 那样每排出现时视觉上是从左到右扫过去，
+           多排同时进场时更是「三排的首列一起动、再轮到三排的次列」，看着就是按列的。
+           延迟也不能按全局序号写死：单独一排滚进来时不该白等前面几排的时间，
+           所以只对「当前这一批」里的排从 0 重新编号。 */
+        var rowKeys = [];
+        entering.forEach(function (c) {
+          var r = info(c).row;
+          if (rowKeys.indexOf(r) < 0) rowKeys.push(r);
+        });
+        rowKeys.sort(function (a, b) { return a - b; });
+
+        entering.forEach(function (c) {
+          c.style.animationDelay = (rowKeys.indexOf(info(c).row) * 120) + "ms";
           c.classList.remove("pending");
           c.classList.remove("reveal");
           void c.offsetWidth;                    // 强制回流，否则连着加同一个 class 不会重新触发动画
           c.classList.add("reveal");
+        });
+
+        entries.forEach(function (e) {
+          if (e.isIntersecting) return;
+          e.target.classList.remove("reveal");
+          e.target.classList.add("pending");     // 划走了就复位，回头还能重播
         });
       }, { rootMargin: "0px 0px -6% 0px", threshold: 0 });
 
