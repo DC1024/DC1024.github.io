@@ -774,18 +774,22 @@
   /* 卡片逐个错开进场。fill 用 backwards 而不是 both：动画结束后不留终态，
      否则会盖住 :hover 的 translateY(-4px) 悬浮效果。 */
   @keyframes cardIn { from { opacity: 0; transform: translateY(20px); } }
-  html.js .pane.in .vid,
-  html.js .pane.in .feat { animation: cardIn 0.5s cubic-bezier(0.22, 0.61, 0.36, 1) backwards; }
-  html.js .pane.in .feat:nth-child(2) { animation-delay: 60ms; }
-  html.js .pane.in .feat:nth-child(3) { animation-delay: 120ms; }
-  html.js .pane.in .feat:nth-child(4) { animation-delay: 180ms; }
-  html.js .pane.in .feat:nth-child(5) { animation-delay: 240ms; }
-  html.js .pane.in .feat:nth-child(6) { animation-delay: 300ms; }
+  html.js .pane.in .vid { animation: cardIn 0.5s cubic-bezier(0.22, 0.61, 0.36, 1) backwards; }
+  /* 项目卡（.feat）原本跟 .vid 一起由 .pane.in 整屏统一触发，错开延迟靠下面这种
+     nth-child(2) 一路写到 nth-child(6) 的写法 —— 只够覆盖 6 张。
+     项目加到 9 张后，第 7~9 张（第三排）落不到任何一条规则，只能拿到默认的 0s 延迟：
+     它们会在「项目屏刚进场」那一瞬间最先开跑，而那一刻它们还在视口之外
+     （项目屏本身比视口高一大截），等真正滚到第三排时动画早播完了，看着就像没有动画。
+     改成每张卡滚进自己视口时才触发，同一排内按列序错开，逻辑见文末 revealFeat。 */
+  html.js .feat.pending { opacity: 0; }
+  html.js .feat.reveal { animation: cardIn 0.5s cubic-bezier(0.22, 0.61, 0.36, 1) backwards; }
 
   @media (prefers-reduced-motion: reduce) {
     html.snap { scroll-snap-type: none; }
     html.js .pane .sec-head, html.js .pane .sec-note { transition: none; }
-    html.js .pane.in .vid, html.js .pane.in .feat { animation: none; }
+    html.js .pane.in .vid, html.js .feat.reveal { animation: none; }
+    /* 项目卡平时靠 .pending 先藏起来（opacity:0），降低动效时不做隐藏，保证一定看得见 */
+    html.js .feat.pending { opacity: 1; }
     .scroll-hint svg { animation: none; }
     /* 下面两条以前漏掉了：都是无限循环动画，实测在 reducedMotion:'reduce' 下仍在跑。
        .avatar::before 尤其过分 —— 它是 blur(4px) 的 conic 渐变在无限旋转，等于一块常驻重绘。 */
@@ -1891,6 +1895,61 @@
         .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status)); })
         .then(function (data) { if (!render(data) && !rendered) fail(); })
         .catch(function () { if (!rendered) fail(); });
+    })();
+
+    /* ---------- 项目卡进场动画：每张卡滚进自己视口时才触发 ----------
+       原因见上面 CSS 注释：原来由 .pane.in 整屏触发 + nth-child 写死 6 条延迟，
+       第三排拿不到延迟，而且整屏进场那一刻它还在视口外，动画白播。
+       这里改为：
+         - 「哪些卡在同一排」用 offsetTop 判定，跟着栅格实际排出来的行列走，
+           1 列 / 2 列 / 3 列都成立，不用再把 nth-child 一路往下写；
+         - 排内按 DOM 顺序（即列序）每张错开 60ms；
+         - IntersectionObserver 在卡片真的进入视口时才加 .reveal，划走后复位以便回来重播。 */
+    (function revealFeat() {
+      var grids = document.querySelectorAll(".feat-grid");
+      if (!grids.length) return;
+
+      var cards = [];
+      Array.prototype.forEach.call(grids, function (g) {
+        cards = cards.concat(Array.prototype.slice.call(g.children));
+      });
+      if (!cards.length) return;
+
+      /* 两条兜底：浏览器不支持 IntersectionObserver、或用户要求降低动效，
+         就一律不碰 —— 卡片保持默认可见。宁可没动画，也不能变成「看不见」。 */
+      if (!("IntersectionObserver" in window)) return;
+      if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+      cards.forEach(function (c) { c.classList.add("pending"); });
+
+      function layout() {
+        var seen = {};
+        cards.forEach(function (c) {
+          var row = Math.round(c.offsetTop);
+          var col = seen[row] || 0;
+          c.style.animationDelay = (col * 60) + "ms";
+          seen[row] = col + 1;
+        });
+      }
+      layout();
+      window.addEventListener("resize", layout, { passive: true });
+
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          var c = e.target;
+          if (!e.isIntersecting) {
+            c.classList.remove("reveal");
+            c.classList.add("pending");          // 划走了就复位，回头还能重播
+            return;
+          }
+          c.classList.remove("pending");
+          c.classList.remove("reveal");
+          void c.offsetWidth;                    // 强制回流，否则连着加同一个 class 不会重新触发动画
+          c.classList.add("reveal");
+        });
+      }, { rootMargin: "0px 0px -6% 0px", threshold: 0 });
+
+      cards.forEach(function (c) { io.observe(c); });
     })();
   </script>
 </body>
