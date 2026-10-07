@@ -374,19 +374,12 @@
     font-family: var(--mono); font-size: 12px; color: var(--accent-ink);
     letter-spacing: 1px; text-transform: uppercase;
   }
-  .feat h3 { font-size: clamp(19px, 1.5vh, 22px); margin: clamp(6px, 0.9vh, 8px) 0 clamp(8px, 1.4vh, 12px); font-weight: 700; overflow-wrap: anywhere; }
+  /* 项目名压成一行（用户指定）：字号从 clamp(19~22px) 降到 14px ——
+     最挤的场景是手机两列（390px 屏卡片内容宽只剩 141px），14px 下
+     最长的「Answer Sheet Builder」约 146px 会截断，所以取 13px（约 136px，放得下）；
+     再加 nowrap + ellipsis 兜底，任何语言/任何宽度都保证只占一行。 */
+  .feat h3 { font-size: 13px; margin: clamp(6px, 0.9vh, 8px) 0 clamp(8px, 1.4vh, 12px); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .feat p { color: var(--muted); font-size: 14.5px; overflow-wrap: anywhere; }
-  .badges { display: flex; flex-wrap: wrap; gap: 8px; margin: clamp(10px, 1.6vh, 16px) 0 clamp(12px, 2vh, 20px); }
-  .badge {
-    font-family: var(--mono); font-size: 11.5px;
-    padding: 4px 10px; border-radius: 6px;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    background: rgba(255,255,255,0.03);
-  }
-  html[data-theme="light"] .badge { background: rgba(2, 110, 190, 0.05); }
-  /* 徽标文字 11.5px，浅色下 --cyan 只有 3.42:1，换 --cyan-ink */
-  .badge.lang { color: var(--cyan-ink); border-color: rgba(34,211,238,0.3); }
   .feat .links { display: flex; gap: 12px; position: relative; z-index: 2; }
   .feat .links a {
     font-size: 13.5px; font-weight: 600; color: var(--text);
@@ -853,7 +846,7 @@
   }
 
   /* 叠加小字 / 徽标 / 提示文字统一提到 12px（原本 11~11.5，手机上偏挤） */
-  .vrank, .vdur, .vhint, .scroll-hint, .badge { font-size: 12px; }
+  .vrank, .vdur, .vhint, .scroll-hint { font-size: 12px; }
 
   @media (max-width: 480px) {
     /* 6 个社交按钮原本在手机上占 3 行，首屏纵向吃紧；
@@ -870,9 +863,7 @@
     /* 长英文项目名（PrinterStatusGuard / Answer Sheet Builder）在 126px 的内容宽里
        不会断行，会把卡片撑破（实测 .feat 内溢 7~15px）—— 必须允许任意位置断行。
        字号不再往下压：17px 已是「不孤字」的底线，靠断行解决而不是靠缩小。 */
-    .feat h3 { font-size: 17px; overflow-wrap: anywhere; }
     .feat p { font-size: 13.5px; overflow-wrap: anywhere; }
-    .badges { gap: 6px; }
     .vmeta { padding: 12px 10px 13px; }
     .vmeta h3 { font-size: 14.5px; min-height: 44px; margin-bottom: 8px; }
     /* 统计行原本在两列下内溢 10px（二维码会被卡片的 overflow:hidden 裁掉半截）。
@@ -1045,11 +1036,6 @@
         <span class="ptag">Tool · Python</span>
         <h3>Pixel Composer CN</h3>
         <p>像素编辑器汉化包：离线一键切换中文界面。</p>
-        <div class="badges">
-          <span class="badge lang">Python</span>
-          <span class="badge">汉化</span>
-          <span class="badge">离线</span>
-        </div>
         <div class="links">
           <a href="https://github.com/DC1024/pixel-composer-cn" target="_blank" rel="noopener">★ 仓库</a>
         </div>
@@ -1060,11 +1046,6 @@
         <span class="ptag">Docker · 汉化</span>
         <h3>wud_zh</h3>
         <p>WUD 容器更新监控简体中文版，另加 5 项增强。</p>
-        <div class="badges">
-          <span class="badge lang">Docker</span>
-          <span class="badge">汉化</span>
-          <span class="badge">增强 5 项</span>
-        </div>
         <div class="links">
           <a href="https://github.com/DC1024/wud_zh" target="_blank" rel="noopener">★ 仓库</a>
         </div>
@@ -1075,11 +1056,6 @@
         <span class="ptag">Web · Frontend</span>
         <h3>Answer Sheet Builder</h3>
         <p>可视化答题卡制作器：题型模块化，一键导出 PDF。</p>
-        <div class="badges">
-          <span class="badge lang">纯前端</span>
-          <span class="badge">题型模块化</span>
-          <span class="badge">导出 PDF</span>
-        </div>
         <div class="links">
           <a href="https://github.com/DC1024/answer-sheet-builder" target="_blank" rel="noopener">★ 仓库</a>
         </div>
@@ -1090,11 +1066,6 @@
         <span class="ptag">Windows · PowerShell</span>
         <h3>PrinterStatusGuard</h3>
         <p>打印机状态守护，卡纸缺墨主动推送到桌面。</p>
-        <div class="badges">
-          <span class="badge lang">PowerShell</span>
-          <span class="badge">便携免安装</span>
-          <span class="badge">桌面通知</span>
-        </div>
         <div class="links">
           <a href="https://github.com/DC1024/PrinterStatusGuard" target="_blank" rel="noopener">★ 仓库</a>
         </div>
@@ -1105,12 +1076,6 @@
         <span class="ptag">Featured · Go</span>
         <h3>MirrorPilot</h3>
         <p>镜像源测速面板，一键生成 daemon.json。</p>
-        <div class="badges">
-          <span class="badge lang">Go</span>
-          <span class="badge">单二进制 / 无 CGO</span>
-          <span class="badge">四层测速</span>
-          <span class="badge">GitHub Actions</span>
-        </div>
         <div class="links">
           <a href="https://github.com/DC1024/mirrorpilot" target="_blank" rel="noopener">★ 仓库</a>
         </div>
@@ -1121,12 +1086,6 @@
         <span class="ptag">Featured · Python</span>
         <h3>ISO Hub</h3>
         <p>Linux ISO 自动更新器，SHA256 校验、SMB/WebDAV 分发。</p>
-        <div class="badges">
-          <span class="badge lang">Python</span>
-          <span class="badge">ISO 镜像</span>
-          <span class="badge">SHA256 校验</span>
-          <span class="badge">SMB / WebDAV</span>
-        </div>
         <div class="links">
           <a href="https://github.com/DC1024/iso-hub" target="_blank" rel="noopener">★ 仓库</a>
         </div>
@@ -1137,11 +1096,6 @@
         <span class="ptag">Docker · CI/CD</span>
         <h3>asfcn-autobuild</h3>
         <p>ASF + Caddy 多架构镜像，上游发版自动重建。</p>
-        <div class="badges">
-          <span class="badge lang">Docker</span>
-          <span class="badge">多架构</span>
-          <span class="badge">GitHub Actions</span>
-        </div>
         <div class="links">
           <a href="https://github.com/DC1024/asfcn-autobuild" target="_blank" rel="noopener">★ 仓库</a>
         </div>
@@ -1152,11 +1106,6 @@
         <span class="ptag">Windows · 汉化</span>
         <h3>RHI 简体中文版</h3>
         <p>ReShade HDR Installer 汉化版，一个窗口管 HDR / DLSS。</p>
-        <div class="badges">
-          <span class="badge lang">Windows x64</span>
-          <span class="badge">完整汉化</span>
-          <span class="badge">.NET 8 桌面</span>
-        </div>
         <div class="links">
           <a href="https://github.com/DC1024/RHI" target="_blank" rel="noopener">★ 仓库</a>
         </div>
@@ -1167,11 +1116,6 @@
         <span class="ptag">Windows · Go</span>
         <h3>whodunit</h3>
         <p>Windows 配置改动溯源：谁改的、何时改，证据分级。</p>
-        <div class="badges">
-          <span class="badge lang">Go</span>
-          <span class="badge">只读溯源</span>
-          <span class="badge">证据 A/B/C/D</span>
-        </div>
         <div class="links">
           <a href="https://github.com/DC1024/whodunit" target="_blank" rel="noopener">★ 仓库</a>
         </div>
@@ -1182,11 +1126,6 @@
         <span class="ptag">Windows · Python</span>
         <h3>Swap Monitors</h3>
         <p>热键一键互换多屏窗口，布局原样保留、免安装。</p>
-        <div class="badges">
-          <span class="badge lang">Python</span>
-          <span class="badge">布局不乱</span>
-          <span class="badge">免安装单文件</span>
-        </div>
         <div class="links">
           <a href="https://github.com/DC1024/swap-monitors" target="_blank" rel="noopener">★ 仓库</a>
         </div>
@@ -1197,11 +1136,6 @@
         <span class="ptag">Docker · Python</span>
         <h3>GT7 Dash</h3>
         <p>GT7 实时遥测仪表盘：本地解密、自动记圈、公开 API。</p>
-        <div class="badges">
-          <span class="badge lang">Python</span>
-          <span class="badge">实时遥测</span>
-          <span class="badge">公开 API</span>
-        </div>
         <div class="links">
           <a href="https://github.com/DC1024/gt7-dash" target="_blank" rel="noopener">★ 仓库</a>
         </div>
