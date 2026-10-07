@@ -341,7 +341,11 @@
   }
 
   /* featured projects */
-  .feat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+  /* 项目区一行四个（用户指定）。容器内容宽约 912px，四列每张约 213px ——
+     和手机两列的 169px 一个量级，卡片内部排版扛得住；
+     卡里长英文名（PrinterStatusGuard 等）靠 .feat h3/p 的 overflow-wrap:anywhere 兜底。
+     761~950 平板降为三列（213→四列只剩 ~156px，太挤），≤760 仍是两列。 */
+  .feat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
   .feat {
     position: relative;
     border: 1px solid var(--border);
@@ -370,8 +374,8 @@
     font-family: var(--mono); font-size: 12px; color: var(--accent-ink);
     letter-spacing: 1px; text-transform: uppercase;
   }
-  .feat h3 { font-size: clamp(19px, 1.5vh, 22px); margin: clamp(6px, 0.9vh, 8px) 0 clamp(8px, 1.4vh, 12px); font-weight: 700; }
-  .feat p { color: var(--muted); font-size: 14.5px; }
+  .feat h3 { font-size: clamp(19px, 1.5vh, 22px); margin: clamp(6px, 0.9vh, 8px) 0 clamp(8px, 1.4vh, 12px); font-weight: 700; overflow-wrap: anywhere; }
+  .feat p { color: var(--muted); font-size: 14.5px; overflow-wrap: anywhere; }
   .badges { display: flex; flex-wrap: wrap; gap: 8px; margin: clamp(10px, 1.6vh, 16px) 0 clamp(12px, 2vh, 20px); }
   .badge {
     font-family: var(--mono); font-size: 11.5px;
@@ -899,6 +903,8 @@
   @media (min-width: 761px) and (max-width: 950px) {
     .vid-grid { grid-template-columns: repeat(2, 1fr); }
     .vid:first-child { grid-column: span 2; }
+    /* 项目区：桌面一行四个，平板这段宽度四列只剩 ~156px/张，降到三列 */
+    .feat-grid { grid-template-columns: repeat(3, 1fr); }
   }
 
   /* 视频由 GitHub Action 定期刷新，条数会变。上面的规则只在「奇数张」时才消得掉空格：
@@ -1168,6 +1174,36 @@
         </div>
         <div class="links">
           <a href="https://github.com/DC1024/whodunit" target="_blank" rel="noopener">★ 仓库</a>
+        </div>
+      </article>
+
+      <article class="feat">
+        <a class="stretch" href="https://dc1024.github.io/swap-monitors/" target="_blank" rel="noopener" aria-label="打开 Swap Monitors 站点"></a>
+        <span class="ptag">Windows · Python</span>
+        <h3>Swap Monitors</h3>
+        <p>多屏窗口互换：按一下热键把所有显示器上的窗口整体对调，最大化还是最大化、贴附布局原样保留；两块屏互换，多屏可轮转或任意指定去向，常驻托盘、免安装单文件。</p>
+        <div class="badges">
+          <span class="badge lang">Python</span>
+          <span class="badge">布局不乱</span>
+          <span class="badge">免安装单文件</span>
+        </div>
+        <div class="links">
+          <a href="https://github.com/DC1024/swap-monitors" target="_blank" rel="noopener">★ 仓库</a>
+        </div>
+      </article>
+
+      <article class="feat">
+        <a class="stretch" href="https://dc1024.github.io/gt7-dash/" target="_blank" rel="noopener" aria-label="打开 GT7 Dash 站点"></a>
+        <span class="ptag">Docker · Python</span>
+        <h3>GT7 Dash</h3>
+        <p>《跑车浪漫旅 7》实时遥测仪表盘：PS5 UDP 遥测在本地解密，浏览器里看转速 / 档位 / G 力 / 赛道地图，自动记圈与场次归档，另带公开数据 API；数据全在本地，Docker 一键部署。</p>
+        <div class="badges">
+          <span class="badge lang">Python</span>
+          <span class="badge">实时遥测</span>
+          <span class="badge">公开 API</span>
+        </div>
+        <div class="links">
+          <a href="https://github.com/DC1024/gt7-dash" target="_blank" rel="noopener">★ 仓库</a>
         </div>
       </article>
     </div>
