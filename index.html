@@ -963,10 +963,13 @@
     <!-- 板块跳转工具条放在左上角；社交入口集中在首屏主按钮区（见 .cta-row），
          主题切换独立放在右上角。 -->
     <div class="nav-links">
+      <!-- 「AI眼中的我」放在最左：它是唯一指向站外子页的入口，与右侧三个
+           页内锚点（视频/摄影/项目）不是同一类动作，靠位置先做区分，
+           再靠胶囊边框做二次区分。 -->
+      <a class="nav-ai" href="ai-profile/" aria-label="打开 AI 眼中的我"><i class="spark" aria-hidden="true"></i>AI眼中的我</a>
       <a href="#videos">视频</a>
       <a href="#photos">摄影</a>
       <a href="#projects">项目</a>
-      <a class="nav-ai" href="ai-profile/" aria-label="打开 AI 眼中的我"><i class="spark" aria-hidden="true"></i>AI眼中的我</a>
     </div>
     <button class="theme-toggle" id="themeToggle" type="button" aria-label="切换日间/夜间主题" title="切换主题">
       <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>

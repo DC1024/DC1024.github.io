@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,29 +7,110 @@
 <meta name="description" content="AI 根据 DC 的历史记录与记忆文件，综合分析生成的人物画像——一句话生成，纯属图一乐。">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<meta name="theme-color" content="#131417" media="(prefers-color-scheme: dark)" />
+<meta name="theme-color" content="#f7f5f0" media="(prefers-color-scheme: light)" />
+<script>
+  /* 主题跟随主页：读同一个 localStorage["theme"]，判决口径与主页逐字一致
+     —— 有偏好就用偏好，没有就按访问时的本地时间（8:00–17:59 日间，其余夜间）。
+     两处口径只要有一处不同，跨页跳转就会闪一下主题，所以改一个必须改另一个。
+     脚本同步内联在 <head>、早于 body 解析，因此不会看到浅色闪成深色。 */
+  (function () {
+    try {
+      var t = localStorage.getItem("theme");
+      if (t !== "light" && t !== "dark") {
+        var h = new Date().getHours();
+        t = (h >= 8 && h < 18) ? "light" : "dark";
+      }
+      document.documentElement.setAttribute("data-theme", t);
+    } catch (e) {
+      document.documentElement.setAttribute("data-theme", "dark");
+    }
+  })();
+</script>
 <style>
+  /* 配色走「纸墨」双主题：默认深色（下面 :root），浅色值整体下沉到
+     html[data-theme="light"]。两套的变量名一一对应，改一处两边都要过一遍。
+     深色不是把浅色简单取反，而是重新配的：正文转暖白、底色转墨黑、
+     强调色整体提亮（原深青 #1f4e5f 在墨底上只有 1.9:1，必须提到 #7fb0c4）。
+     全部文字组合已实测 WCAG AA（小字 >= 4.5:1）。 */
   :root{
+    color-scheme: dark;
+    --ink:#ece9e4;
+    --ink-2:#c6c1b8;
+    --muted:#9a948a;
+    --line:#31343b;
+    --paper:#131417;
+    --card:#191b1f;
+    --accent:#7fb0c4;
+    --accent-2:#d99a4e;
+    --accent-soft:#1e2a30;
+    --warm-soft:#241f19;
+    /* 原稿里散落的硬编码色，全部收进变量才能跟着主题走：
+       --surface = 卡片/表格/白底块，--surface-2 = 表头，
+       --warm-line = 暖色块边框，--code-bg = 行内代码底。 */
+    --surface:#191b1f;
+    --surface-2:#212429;
+    --warm-line:#353022;
+    --code-bg:#2a2d33;
+    --toc-num:#928e84;
+    /* 顶部提示条：深色下改用深暖底 + 亮赭字，保持「暖色提示」的语义 */
+    --topbar:#1c1a15;
+    --topbar-line:#353022;
+    --topbar-ink:#dcb87a;
+    /* body 背景两团光晕，冷青 + 暖赭，深色下压暗只留一点氛围 */
+    --glow-a:#1a2028;
+    --glow-b:#201c15;
+    /* 总结块：浅色主题里它是「深底反白」，深色主题里镜像成「浅底反黑」——
+       两边与页面底的反差几乎相同（15.2 vs 16.3），强调力度不变。 */
+    --final-bg:#ece9e4;
+    --final-ink:#16181d;
+    --final-p:#2a2d33;
+    --final-strong:#000000;
+    --final-eyebrow:#8a5a12;
+    --final-rule:rgba(0,0,0,.18);
+    --serif:"Source Han Serif SC","Noto Serif SC","Songti SC","SimSun",serif;
+    --sans:"Microsoft YaHei","PingFang SC","Hiragino Sans GB",system-ui,sans-serif;
+    --mono:"Cascadia Mono","Consolas","SFMono-Regular",monospace;
+  }
+  /* 浅色主题：沿用最初的纸张色系，只压深了三处 —— 实测原值的小字对比度不足 AA
+     （--muted 4.44、--accent-2 3.46、--toc-num 2.32，全部用在 11~12.5px 上），
+     按「最小偏移」压到刚好过 4.5:1，色相与视觉重量都保持不变。 */
+  html[data-theme="light"]{
+    color-scheme: light;
     --ink:#16181d;
     --ink-2:#3c4048;
-    --muted:#6b7280;
+    --muted:#68707d;
     --line:#e3e0d8;
     --paper:#f7f5f0;
     --card:#fffdf8;
     --accent:#1f4e5f;
-    --accent-2:#b4762a;
+    --accent-2:#9d641f;
     --accent-soft:#e8f0f1;
     --warm-soft:#f6ecdd;
-    --serif:"Source Han Serif SC","Noto Serif SC","Songti SC","SimSun",serif;
-    --sans:"Microsoft YaHei","PingFang SC","Hiragino Sans GB",system-ui,sans-serif;
-    --mono:"Cascadia Mono","Consolas","SFMono-Regular",monospace;
+    --surface:#fff;
+    --surface-2:#fbfaf6;
+    --warm-line:#ecdcc4;
+    --code-bg:#efece5;
+    --toc-num:#757069;
+    --topbar:#f9f2e5;
+    --topbar-line:#ecdcc4;
+    --topbar-ink:#8a5a12;
+    --glow-a:#eef3f3;
+    --glow-b:#f7efe2;
+    --final-bg:#16181d;
+    --final-ink:#f4f1ea;
+    --final-p:#d9d5cc;
+    --final-strong:#fff;
+    --final-eyebrow:#d8a35c;
+    --final-rule:rgba(255,255,255,.18);
   }
   *{box-sizing:border-box;}
   html{scroll-behavior:smooth;}
   body{
     margin:0;
     background:
-      radial-gradient(1200px 600px at 85% -10%, #eef3f3 0%, transparent 60%),
-      radial-gradient(900px 500px at -10% 30%, #f7efe2 0%, transparent 55%),
+      radial-gradient(1200px 600px at 85% -10%, var(--glow-a) 0%, transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, var(--glow-b) 0%, transparent 55%),
       var(--paper);
     color:var(--ink);
     font-family:var(--sans);
@@ -40,8 +121,8 @@
   /* 顶部提示条：进页面第一眼就把话说清楚 —— 这页是 AI 写的玩笑之作，
      别当成本人自述。暖色底 + 赭黄圆点，与正文的纸张色系同一族。 */
   .pagetop{
-    background:#f9f2e5;
-    border-bottom:1px solid #ecdcc4;
+    background:var(--topbar);
+    border-bottom:1px solid var(--topbar-line);
   }
   .pagetop-in{
     max-width:1180px;margin:0 auto;padding:11px 28px;
@@ -57,7 +138,7 @@
     grid-column:2;justify-self:center;
     display:inline-flex;align-items:center;gap:10px;
     margin:0;font-family:var(--serif);font-weight:700;
-    font-size:clamp(14px,1.5vw,16.5px);color:#8a5a12;letter-spacing:.03em;
+    font-size:clamp(14px,1.5vw,16.5px);color:var(--topbar-ink);letter-spacing:.03em;
   }
   .disclaimer::before{
     content:"";width:7px;height:7px;border-radius:50%;
@@ -115,7 +196,7 @@
   nav.toc .tn{font-family:var(--mono);font-size:11px;color:var(--accent-2);letter-spacing:.12em;margin-bottom:12px;}
   nav.toc a{display:block;color:var(--muted);text-decoration:none;padding:5px 0;transition:color .15s;}
   nav.toc a:hover{color:var(--accent);}
-  nav.toc a span{font-family:var(--mono);font-size:11px;color:#a8a29a;margin-right:8px;}
+  nav.toc a span{font-family:var(--mono);font-size:11px;color:var(--toc-num);margin-right:8px;}
   /* sections */
   section{margin:0 0 78px;scroll-margin-top:28px;}
   .sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:26px;}
@@ -168,15 +249,15 @@
   .quotes{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 8px;}
   .quotes span{
     font-size:13.5px;color:var(--ink);
-    background:#fff;border:1px solid var(--line);
+    background:var(--surface);border:1px solid var(--line);
     padding:7px 12px;border-radius:2px;
   }
   .quotes span::before{content:"「";color:var(--accent-2);}
   .quotes span::after{content:"」";color:var(--accent-2);}
   /* table */
-  table{width:100%;border-collapse:collapse;margin:22px 0 8px;font-size:14.5px;background:#fff;}
+  table{width:100%;border-collapse:collapse;margin:22px 0 8px;font-size:14.5px;background:var(--surface);}
   th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:top;}
-  th{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--muted);font-weight:500;background:#fbfaf6;}
+  th{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--muted);font-weight:500;background:var(--surface-2);}
   td strong{font-weight:600;}
   td .small{display:block;font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.6;}
   /* bars */
@@ -192,7 +273,7 @@
   .bar b{font-family:var(--mono);font-size:9.5px;color:var(--ink-2);font-weight:500;margin-bottom:4px;}
   .legend{font-size:12px;color:var(--muted);margin-top:10px;}
   /* loop */
-  .loop{display:grid;grid-template-columns:repeat(6,1fr);gap:0;margin:26px 0 10px;border:1px solid var(--line);background:#fff;}
+  .loop{display:grid;grid-template-columns:repeat(6,1fr);gap:0;margin:26px 0 10px;border:1px solid var(--line);background:var(--surface);}
   .loop div{padding:16px 12px;border-right:1px solid var(--line);position:relative;}
   .loop div:last-child{border-right:0;}
   .loop .n{font-family:var(--mono);font-size:10.5px;color:var(--accent-2);letter-spacing:.1em;}
@@ -201,30 +282,30 @@
   /* tension */
   .tension{
     background:var(--warm-soft);
-    border:1px solid #ecdcc4;
+    border:1px solid var(--warm-line);
     padding:18px 20px;margin:16px 0;font-size:14.5px;
   }
   .tension b{color:var(--ink);}
   /* summary */
   .final{
-    background:var(--ink);color:#f4f1ea;
+    background:var(--final-bg);color:var(--final-ink);
     padding:44px 46px;margin-top:10px;
   }
-  .final .eyebrow{color:#d8a35c;margin-bottom:16px;}
-  .final p{color:#d9d5cc;font-size:15.5px;margin-bottom:14px;}
-  .final p strong{color:#fff;}
+  .final .eyebrow{color:var(--final-eyebrow);margin-bottom:16px;}
+  .final p{color:var(--final-p);font-size:15.5px;margin-bottom:14px;}
+  .final p strong{color:var(--final-strong);}
   .final .one{
     font-family:var(--serif);font-size:clamp(22px,3vw,30px);line-height:1.6;
-    color:#fff;margin:26px 0 0;padding-top:24px;border-top:1px solid rgba(255,255,255,.18);
+    color:var(--final-strong);margin:26px 0 0;padding-top:24px;border-top:1px solid var(--final-rule);
   }
   /* checklist */
   .cols{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:18px 0;}
-  .box{background:#fff;border:1px solid var(--line);padding:18px 20px;}
+  .box{background:var(--surface);border:1px solid var(--line);padding:18px 20px;}
   .box h4{margin:0 0 10px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--accent-2);font-weight:500;}
   .box ul{margin:0;padding-left:18px;font-size:14px;color:var(--ink-2);}
   .box li{margin:7px 0;}
   footer{border-top:1px solid var(--line);padding-top:22px;font-size:12.5px;color:var(--muted);line-height:1.9;}
-  footer code{font-family:var(--mono);font-size:11.5px;background:#efece5;padding:1px 5px;}
+  footer code{font-family:var(--mono);font-size:11.5px;background:var(--code-bg);padding:1px 5px;}
   @media (max-width:900px){
     .layout{grid-template-columns:1fr;gap:0;}
     nav.toc{display:none;}
