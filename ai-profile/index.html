@@ -306,9 +306,42 @@
   .box li{margin:7px 0;}
   footer{border-top:1px solid var(--line);padding-top:22px;font-size:12.5px;color:var(--muted);line-height:1.9;}
   footer code{font-family:var(--mono);font-size:11.5px;background:var(--code-bg);padding:1px 5px;}
+  /* 手机端章节条：默认不出现（桌面用左侧那列目录），只在窄屏接管导航。 */
+  .tocbar{display:none;}
   @media (max-width:900px){
     .layout{grid-template-columns:1fr;gap:0;}
     nav.toc{display:none;}
+    /* 吸顶：滚过顶部提示条后一直贴在视口顶端。
+       z-index 要给足 —— 页面里有 sticky 的目录与若干卡片，别被它们盖住。 */
+    .tocbar{
+      position:sticky;top:0;z-index:30;
+      display:flex;align-items:center;gap:7px;
+      padding:5px 14px;
+      background:var(--card);
+      border-bottom:1px solid var(--line);
+      overflow-x:auto;overflow-y:hidden;
+      -webkit-overflow-scrolling:touch;
+      scrollbar-width:none;
+    }
+    .tocbar::-webkit-scrollbar{display:none;}
+    /* 触控目标按 44 下限给（Apple HIG / WCAG 2.5.5），chips 虽小也别缩水 */
+    .tocbar a{
+      flex:none;display:inline-flex;align-items:center;
+      min-height:44px;padding:0 13px;
+      border:1px solid var(--line);border-radius:999px;
+      background:var(--surface);
+      font-size:13px;color:var(--muted);text-decoration:none;white-space:nowrap;
+    }
+    .tocbar a span{font-family:var(--mono);font-size:10px;color:var(--toc-num);margin-right:6px;}
+    /* 返回单独强调：和章节 chips 同形但换色，避免在一排灰胶囊里找不着 */
+    .tocbar .tb-back{
+      font-family:var(--mono);font-size:13px;
+      color:var(--accent);border-color:var(--accent);
+    }
+    /* 顶部提示条里的返回与吸顶条重复了，窄屏下隐掉，让提示条专心放声明 */
+    .pagetop .backlink{display:none;}
+    /* 锚点跳转要躲开吸顶条，否则章节标题会被压在条下面（条高 54 + 余量 8） */
+    section{scroll-margin-top:62px;}
     .loop{grid-template-columns:1fr 1fr;}
     .loop div{border-bottom:1px solid var(--line);}
     .loop div:nth-child(2n){border-right:0;}
@@ -346,6 +379,23 @@
     <p class="disclaimer">一句话生成，纯属图一乐</p>
   </div>
 </div>
+<!-- 手机端章节条：桌面靠左侧那列 sticky 目录导航，但它在 <=900px 被隐藏了，
+     而这一页在手机上接近 18000px 高、9 个章节无处可跳。所以这里另给一条
+     吸顶的横向滚动条，把「返回」和全部章节收进去，滚到哪儿都能换章。
+     （章节链接与下面 nav.toc 重复了一份，两者按视口互斥显示 —— 与其用
+     CSS 把同一份 DOM 搬来搬去，不如各管一段，改章节名时记得两处同步。） -->
+<nav class="tocbar" aria-label="章节导航">
+  <a class="tb-back" href="../" aria-label="返回主页">← 返回</a>
+  <a href="#s0"><span>00</span>方法与边界</a>
+  <a href="#s1"><span>01</span>性格底色</a>
+  <a href="#s2"><span>02</span>兴趣地图</a>
+  <a href="#s3"><span>03</span>工作与学习</a>
+  <a href="#s4"><span>04</span>价值排序</a>
+  <a href="#s5"><span>05</span>交往风格</a>
+  <a href="#s6"><span>06</span>张力与代价</a>
+  <a href="#s7"><span>07</span>整体总结</a>
+  <a href="#s8"><span>08</span>协作说明书</a>
+</nav>
 <div class="wrap">
 
 <header class="top">
