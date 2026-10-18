@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 眼中的我 · DC</title>
+<meta name="description" content="AI 根据 DC 的历史记录与记忆文件，综合分析生成的人物画像——一句话生成，纯属图一乐。">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<style>
+  :root{
+    --ink:#16181d;
+    --ink-2:#3c4048;
+    --muted:#6b7280;
+    --line:#e3e0d8;
+    --paper:#f7f5f0;
+    --card:#fffdf8;
+    --accent:#1f4e5f;
+    --accent-2:#b4762a;
+    --accent-soft:#e8f0f1;
+    --warm-soft:#f6ecdd;
+    --serif:"Source Han Serif SC","Noto Serif SC","Songti SC","SimSun",serif;
+    --sans:"Microsoft YaHei","PingFang SC","Hiragino Sans GB",system-ui,sans-serif;
+    --mono:"Cascadia Mono","Consolas","SFMono-Regular",monospace;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 600px at 85% -10%, #eef3f3 0%, transparent 60%),
+      radial-gradient(900px 500px at -10% 30%, #f7efe2 0%, transparent 55%),
+      var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:16px;
+    line-height:1.85;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* 顶部提示条：进页面第一眼就把话说清楚 —— 这页是 AI 写的玩笑之作，
+     别当成本人自述。暖色底 + 赭黄圆点，与正文的纸张色系同一族。 */
+  .pagetop{
+    background:#f9f2e5;
+    border-bottom:1px solid #ecdcc4;
+  }
+  .pagetop-in{
+    max-width:1180px;margin:0 auto;padding:11px 28px;
+    display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:16px;
+  }
+  .backlink{
+    font-family:var(--mono);font-size:12.5px;color:var(--accent);
+    text-decoration:none;border-bottom:1px solid transparent;
+    transition:border-color .2s;white-space:nowrap;
+  }
+  .backlink:hover{border-bottom-color:var(--accent);}
+  .disclaimer{
+    grid-column:2;justify-self:center;
+    display:inline-flex;align-items:center;gap:10px;
+    margin:0;font-family:var(--serif);font-weight:700;
+    font-size:clamp(14px,1.5vw,16.5px);color:#8a5a12;letter-spacing:.03em;
+  }
+  .disclaimer::before{
+    content:"";width:7px;height:7px;border-radius:50%;
+    background:var(--accent-2);flex:none;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:0 28px 96px;}
+  /* header */
+  header.top{
+    padding:52px 0 40px;
+    border-bottom:1px solid var(--line);
+    position:relative;
+  }
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    color:var(--accent-2);
+    margin-bottom:22px;
+  }
+  h1{
+    font-family:var(--serif);
+    font-size:clamp(34px,5.2vw,62px);
+    line-height:1.22;
+    letter-spacing:.01em;
+    margin:0 0 18px;
+    font-weight:700;
+    max-width:900px;
+  }
+  h1 .thin{color:var(--accent);}
+  .lede{
+    max-width:760px;
+    font-size:17px;
+    color:var(--ink-2);
+    margin:0 0 30px;
+  }
+  .meta{
+    display:flex;flex-wrap:wrap;gap:10px 26px;
+    font-family:var(--mono);font-size:12.5px;color:var(--muted);
+  }
+  .meta b{color:var(--ink);font-weight:600;}
+  /* layout */
+  .layout{
+    display:grid;
+    grid-template-columns:212px minmax(0,1fr);
+    gap:56px;
+    padding-top:44px;
+  }
+  nav.toc{
+    position:sticky;top:28px;align-self:start;
+    font-size:13.5px;
+    border-left:1px solid var(--line);
+    padding-left:18px;
+  }
+  nav.toc .tn{font-family:var(--mono);font-size:11px;color:var(--accent-2);letter-spacing:.12em;margin-bottom:12px;}
+  nav.toc a{display:block;color:var(--muted);text-decoration:none;padding:5px 0;transition:color .15s;}
+  nav.toc a:hover{color:var(--accent);}
+  nav.toc a span{font-family:var(--mono);font-size:11px;color:#a8a29a;margin-right:8px;}
+  /* sections */
+  section{margin:0 0 78px;scroll-margin-top:28px;}
+  .sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:26px;}
+  .sec-num{
+    font-family:var(--mono);font-size:12px;color:var(--accent-2);
+    letter-spacing:.14em;white-space:nowrap;
+  }
+  h2{
+    font-family:var(--serif);
+    font-size:clamp(24px,3.2vw,34px);
+    line-height:1.35;margin:0;font-weight:700;letter-spacing:.01em;
+  }
+  h3{
+    font-family:var(--serif);
+    font-size:20px;line-height:1.5;margin:34px 0 12px;font-weight:700;
+  }
+  h3 .idx{font-family:var(--mono);font-size:12px;color:var(--accent-2);margin-right:10px;letter-spacing:.08em;}
+  p{margin:0 0 16px;color:var(--ink-2);}
+  p strong{color:var(--ink);font-weight:600;}
+  .intro{font-size:15px;color:var(--muted);border-left:2px solid var(--accent-2);padding-left:16px;margin-bottom:34px;}
+  /* evidence */
+  .ev{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-left:3px solid var(--accent);
+    padding:14px 18px;
+    margin:18px 0;
+    font-size:14.5px;
+    color:var(--ink-2);
+  }
+  .ev .tag{
+    display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;
+    color:var(--accent);background:var(--accent-soft);
+    padding:2px 7px;margin-right:10px;vertical-align:1px;
+  }
+  .ev b{color:var(--ink);}
+  .ev q{font-style:normal;color:var(--ink);}
+  /* trait cards */
+  .trait{
+    display:grid;grid-template-columns:1fr;gap:0;
+    border-top:1px solid var(--line);
+    padding-top:26px;margin-top:30px;
+  }
+  .trait h3{margin-top:0;}
+  .trait .kicker{
+    font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--accent-2);
+    margin-bottom:6px;
+  }
+  /* quote chips */
+  .quotes{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 8px;}
+  .quotes span{
+    font-size:13.5px;color:var(--ink);
+    background:#fff;border:1px solid var(--line);
+    padding:7px 12px;border-radius:2px;
+  }
+  .quotes span::before{content:"「";color:var(--accent-2);}
+  .quotes span::after{content:"」";color:var(--accent-2);}
+  /* table */
+  table{width:100%;border-collapse:collapse;margin:22px 0 8px;font-size:14.5px;background:#fff;}
+  th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:top;}
+  th{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--muted);font-weight:500;background:#fbfaf6;}
+  td strong{font-weight:600;}
+  td .small{display:block;font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.6;}
+  /* bars */
+  .chart{
+    background:var(--card);border:1px solid var(--line);padding:22px 24px 16px;margin:24px 0;
+  }
+  .chart .title{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--muted);margin-bottom:16px;}
+  .bars{display:flex;align-items:flex-end;gap:4px;height:120px;}
+  .bar{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;}
+  .bar i{display:block;width:100%;background:var(--accent);opacity:.82;min-height:1px;}
+  .bar.hot i{background:var(--accent-2);opacity:.95;}
+  .bar em{font-family:var(--mono);font-size:9.5px;color:var(--muted);font-style:normal;margin-top:6px;}
+  .bar b{font-family:var(--mono);font-size:9.5px;color:var(--ink-2);font-weight:500;margin-bottom:4px;}
+  .legend{font-size:12px;color:var(--muted);margin-top:10px;}
+  /* loop */
+  .loop{display:grid;grid-template-columns:repeat(6,1fr);gap:0;margin:26px 0 10px;border:1px solid var(--line);background:#fff;}
+  .loop div{padding:16px 12px;border-right:1px solid var(--line);position:relative;}
+  .loop div:last-child{border-right:0;}
+  .loop .n{font-family:var(--mono);font-size:10.5px;color:var(--accent-2);letter-spacing:.1em;}
+  .loop .t{font-size:13.5px;font-weight:600;margin:6px 0 4px;line-height:1.45;}
+  .loop .d{font-size:11.5px;color:var(--muted);line-height:1.55;}
+  /* tension */
+  .tension{
+    background:var(--warm-soft);
+    border:1px solid #ecdcc4;
+    padding:18px 20px;margin:16px 0;font-size:14.5px;
+  }
+  .tension b{color:var(--ink);}
+  /* summary */
+  .final{
+    background:var(--ink);color:#f4f1ea;
+    padding:44px 46px;margin-top:10px;
+  }
+  .final .eyebrow{color:#d8a35c;margin-bottom:16px;}
+  .final p{color:#d9d5cc;font-size:15.5px;margin-bottom:14px;}
+  .final p strong{color:#fff;}
+  .final .one{
+    font-family:var(--serif);font-size:clamp(22px,3vw,30px);line-height:1.6;
+    color:#fff;margin:26px 0 0;padding-top:24px;border-top:1px solid rgba(255,255,255,.18);
+  }
+  /* checklist */
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:18px 0;}
+  .box{background:#fff;border:1px solid var(--line);padding:18px 20px;}
+  .box h4{margin:0 0 10px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--accent-2);font-weight:500;}
+  .box ul{margin:0;padding-left:18px;font-size:14px;color:var(--ink-2);}
+  .box li{margin:7px 0;}
+  footer{border-top:1px solid var(--line);padding-top:22px;font-size:12.5px;color:var(--muted);line-height:1.9;}
+  footer code{font-family:var(--mono);font-size:11.5px;background:#efece5;padding:1px 5px;}
+  @media (max-width:900px){
+    .layout{grid-template-columns:1fr;gap:0;}
+    nav.toc{display:none;}
+    .loop{grid-template-columns:1fr 1fr;}
+    .loop div{border-bottom:1px solid var(--line);}
+    .loop div:nth-child(2n){border-right:0;}
+    .cols{grid-template-columns:1fr;}
+    .final{padding:32px 24px;}
+    .wrap{padding:0 20px 64px;}
+    header.top{padding:48px 0 30px;}
+  }
+  /* 窄屏防溢出：网格与弹性子项必须允许收缩 */
+  main,section,.trait,.sec-head,.ev,.chart,.loop,.cols,.box,.final{min-width:0;}
+  .layout>*{min-width:0;}
+  p,li,td,th,.ev,h1,h2,h3{overflow-wrap:anywhere;word-break:break-word;}
+  code{word-break:break-all;}
+  .loop .t,.loop .d,.box li{overflow-wrap:anywhere;}
+  .quotes span{max-width:100%;overflow-wrap:anywhere;}
+  img,table{max-width:100%;}
+  @media (max-width:560px){
+    .bars{gap:2px;}
+    .bar b,.bar em{font-size:8.5px;}
+    .chart{padding:18px 14px 14px;}
+    table{font-size:13.5px;}
+    th,td{padding:10px 10px;}
+    /* 窄屏把提示条改上下两行：返回链接一行，声明一行并居中。
+       横向挤三段必然折行难看，不如主动换行。 */
+    .pagetop-in{grid-template-columns:1fr;gap:6px;padding:10px 20px;justify-items:center;}
+    .disclaimer{grid-column:1;font-size:15px;}
+    .backlink{order:-1;}
+  }
+</style>
+</head>
+<body>
+<div class="pagetop">
+  <div class="pagetop-in">
+    <a class="backlink" href="../">← 返回主页</a>
+    <p class="disclaimer">一句话生成，纯属图一乐</p>
+  </div>
+</div>
+<div class="wrap">
+
+<header class="top">
+  <div class="eyebrow">Profile / 人物画像</div>
+  <h1>把「可验证」当作底线的<br><span class="thin">自建派工程师</span></h1>
+  <p class="lede">关于 DC 的性格底色、兴趣地图、工作与学习方式、价值排序，以及与人协作时的真实手感。所有判断尽量落在可核对的事件上，而不是形容词上。</p>
+  <div class="meta">
+    <div>观察窗口 <b>2026-08-30 → 2026-10-18</b></div>
+    <div>会话工作区 <b>167 个</b></div>
+    <div>记忆文件 <b>206 份</b></div>
+    <div>跨项目长期记忆 <b>592 行 / 117 KB</b></div>
+  </div>
+</header>
+
+<div class="layout">
+
+<nav class="toc">
+  <div class="tn">CONTENTS</div>
+  <a href="#s0"><span>00</span>方法与边界</a>
+  <a href="#s1"><span>01</span>性格底色</a>
+  <a href="#s2"><span>02</span>兴趣地图</a>
+  <a href="#s3"><span>03</span>工作与学习</a>
+  <a href="#s4"><span>04</span>价值排序</a>
+  <a href="#s5"><span>05</span>交往风格</a>
+  <a href="#s6"><span>06</span>张力与代价</a>
+  <a href="#s7"><span>07</span>整体总结</a>
+  <a href="#s8"><span>08</span>协作说明书</a>
+</nav>
+
+<main>
+
+<section id="s0">
+  <div class="sec-head"><div class="sec-num">00</div><h2>方法与边界</h2></div>
+  <p class="intro">这份画像不是心理测评，也不是社交标签。它只回答一个问题：<strong>从一个人实际做过的事、留下的记录、给出的反馈里，能稳定地看出什么。</strong></p>
+  <p>材料有三类：跨项目长期记忆（工具铁律、服务器、发布链路、代码调研原则）、各工作区的日志（项目推进过程与踩坑复盘）、以及身份与偏好文件（称呼、城市、长期关注）。这些记录有一个天然偏向：<strong>它们几乎全部由「做事」产生，因此更能反映工作人格，而不是私人生活。</strong>凡是推断，我会写明「推断」；凡是有原话，我会尽量引原话。</p>
+  <div class="ev"><span class="tag">READING</span>记录里出现频率最高的词不是「喜欢」或「想要」，而是<b>实测、复核、回验、判据、根因、硬门槛</b>。语言习惯本身就是性格证据。</div>
+</section>
+
+<section id="s1">
+  <div class="sec-head"><div class="sec-num">01</div><h2>性格底色：五个稳定的切面</h2></div>
+
+  <div class="trait">
+    <div class="kicker">TRAIT 01 / EPISTEMIC</div>
+    <h3>证据癖：不相信「应该好了」</h3>
+    <p>DC 对世界的默认假设是「它会坏」，所以任何结论都必须带证据链。这不是谨慎，而是一种近乎道德要求的认知习惯：<strong>没有观测到的成功，不算成功。</strong></p>
+    <div class="ev"><span class="tag">2026-09-28</span>回读 GitHub Release 正文时反复出现 <b>U+FFFD</b> 替换字符，看起来像中文被写坏。他没有直接重写，而是先做受控实验（短文本往返无损）、再抓渲染页 HTML 交叉验证，最终确认是<b>本机 TLS 中间人读取链路损坏，服务端存储是好的</b>。先怀疑自己，再怀疑链路，最后才怀疑对方。</div>
+    <div class="ev"><span class="tag">2026-09-22</span>同一批镜像源，探针说「传输被中断」、真实 <b>docker pull</b> 说「全部成功」。他没有二选一，而是要求<b>两条结论都写进文档</b>——因为它们测量的是不同路径。判断「慢」还必须带单位：<b>102.6 KiB / 15 秒 = 7 kB/s</b>，不是「稳定断在 102.6 KiB」。</div>
+    <div class="ev"><span class="tag">2026-10-13</span>只靠 <b>grep "stuck"</b> 看到失败码，就下过「该项目零脱困反射」的结论；精读后发现 <b>MoveToSkill 自带三档脱困</b>，方向完全相反。这次代价被写成了「代码调研铁律」：<b>失败码的存在恰恰说明该路径被显式处理过，看到失败码要去读它的上游。</b></div>
+    <p>最能说明问题的是部署纪律：改完代码不算完，<strong>容器内 md5 必须等于本地 md5</strong>；「构建成功」和「线上真的换了」是两件事；「报失败」也可能已经删掉了——要 <b>Test-Path</b> 复核。他对「假绿」的容忍度，远低于对失败的容忍度。</p>
+  </div>
+
+  <div class="trait">
+    <div class="kicker">TRAIT 02 / PERFECTIONISM</div>
+    <h3>掌控型完美主义：差 1px 也不行，但必须发货</h3>
+    <p>他的完美主义不是审美式的拖延，而是<strong>用工程纪律把标准钉死</strong>。GT7 仪表盘从首日 18 项测试起步，一路加到 226 → 231 → 277 → 321 → 406 项；九套主题（auto/light/dark + oled/sepia/racing/glacier/hud/midnight）用 <code>data-theme</code> 统一切换，并逐套校验对比度。WUD 汉化把语言包做到 <b>502/502 中英严格对称</b>，并用 CI 守卫防止回退。</p>
+    <p>但他不是「永远在打磨、从不发布」的人。AutoAudioSwitcher 发到 v1.1.3，WUD 发到 beta1.5，winprintdiag 发 v1.0.0，MirrorPilot 从 v0.1.0 一路发到 v0.3.1。<strong>他的完美主义有出口：先定验收判据，再允许发货。</strong></p>
+    <div class="ev"><span class="tag">2026-10-02</span>为一个中文段落的排版，他要求检查「源码换行落在两个汉字之间」造成的半角豁口；全站 7 个多行 <code>&lt;p&gt;</code>，实际需要改 5 处，逐处给出判定依据。这种问题用「字数 × 字号」永远算不出来，只能渲染后实测。</div>
+  </div>
+
+  <div class="trait">
+    <div class="kicker">TRAIT 03 / AUTONOMY</div>
+    <h3>反中间商：不能接受「被别人卡住」</h3>
+    <p>他对「依赖一个自己无法检查、无法替换、无法退出的东西」有近乎生理性的不适。所有机器都没有稳定海外网络，这个硬约束没有让他妥协，反而逼出了一整套「借别人的机器出海」的方案：华为云 SWR 公益中转、GitHub Actions 搬到阿里云 ACR、按需选择镜像源。<strong>他不接受「本机回源」这种听起来正确但根本跑不通的方案。</strong></p>
+    <p>选型上他有一条清晰的红线：<strong>拒绝闭源中间件；非商业项目只接受绝对免费的来源。</strong>KSpeeder 被否掉的理由不是不好用，而是「用别人免费节点还卖钱」。此后给建议时，「付费 / 会员 / 闭源」三个词基本从选项里消失。</p>
+    <div class="ev"><span class="tag">长期</span>五台机器（Ubuntu、Arch、PVE、iStoreOS、Z4Pro）全部自持，三十多个容器自己编排；监控、更新、镜像、网盘、旅行规划、Docker 更新检测，能自建的绝不托管。这不是省钱，是<b>把控制权留在自己手里</b>。</div>
+  </div>
+
+  <div class="trait">
+    <div class="kicker">TRAIT 04 / OWNERSHIP</div>
+    <h3>所有权意识：这是我的作品，不是我的 fork</h3>
+    <p>AutoAudioSwitcher 这件事很能说明他的边界感。代码归属实测约 <b>70.8% 为新增</b>，但架构骨架与音频管理核心思路源自上游 Apache 2.0 项目。他明确说过：<q>我一开始不是说了要自己开发吗</q>，不接受「fork / 二次开发」的对外表述；同时，上游署名必须保留，英文版措辞从「fork」改成「enhanced edition」。</p>
+    <p>这不是虚荣，而是一种<strong>「署名与归属必须准确」的原则</strong>：既不抹掉别人的贡献，也不把自己的劳动挂到别人名下。他会在意 README 的中文首页、Release 说明、站点文案的调性——因为那是作品的「门面」，也是作者对读者的交代。</p>
+  </div>
+
+  <div class="trait">
+    <div class="kicker">TRAIT 05 / RHYTHM</div>
+    <h3>夜行性长耐力：高峰在 23 点到凌晨 3 点</h3>
+    <p>把 179 份按日期命名的日志的写入时间按小时统计，<strong>48.0% 落在 23:00–03:00</strong>；算上 22 点则达到 <b>56.4%</b>——超过一半。峰值在 <b>00:00（29 次）</b>，深夜 0 点的记录比上午 9 点（5 次）多近六倍。工作区从 8 月 30 日到 10 月 18 日共 <b>167 个</b>，平均每天 3.3 个会话——这不是「偶尔熬夜」，而是一种稳定的夜间工作节律。</p>
+    <div class="chart">
+      <div class="title">MEMORY WRITES BY HOUR / 179 DATED LOGS</div>
+      <div class="bars">
+        <div class="bar hot"><b>29</b><i style="height:100%"></i><em>00</em></div>
+        <div class="bar hot"><b>24</b><i style="height:83%"></i><em>01</em></div>
+        <div class="bar hot"><b>13</b><i style="height:45%"></i><em>02</em></div>
+        <div class="bar hot"><b>3</b><i style="height:10%"></i><em>03</em></div>
+        <div class="bar"><b>1</b><i style="height:3%"></i><em>04</em></div>
+        <div class="bar"><b>0</b><i style="height:1%"></i><em>05</em></div>
+        <div class="bar"><b>1</b><i style="height:3%"></i><em>06</em></div>
+        <div class="bar"><b>0</b><i style="height:1%"></i><em>07</em></div>
+        <div class="bar"><b>3</b><i style="height:10%"></i><em>08</em></div>
+        <div class="bar"><b>5</b><i style="height:17%"></i><em>09</em></div>
+        <div class="bar"><b>1</b><i style="height:3%"></i><em>10</em></div>
+        <div class="bar"><b>4</b><i style="height:14%"></i><em>11</em></div>
+        <div class="bar"><b>2</b><i style="height:7%"></i><em>12</em></div>
+        <div class="bar"><b>9</b><i style="height:31%"></i><em>13</em></div>
+        <div class="bar"><b>6</b><i style="height:21%"></i><em>14</em></div>
+        <div class="bar"><b>7</b><i style="height:24%"></i><em>15</em></div>
+        <div class="bar"><b>6</b><i style="height:21%"></i><em>16</em></div>
+        <div class="bar"><b>2</b><i style="height:7%"></i><em>17</em></div>
+        <div class="bar"><b>3</b><i style="height:10%"></i><em>18</em></div>
+        <div class="bar"><b>9</b><i style="height:31%"></i><em>19</em></div>
+        <div class="bar"><b>13</b><i style="height:45%"></i><em>20</em></div>
+        <div class="bar"><b>6</b><i style="height:21%"></i><em>21</em></div>
+        <div class="bar hot"><b>15</b><i style="height:52%"></i><em>22</em></div>
+        <div class="bar hot"><b>17</b><i style="height:59%"></i><em>23</em></div>
+      </div>
+      <div class="legend">橙色为 22:00–03:00 区间，占 101 / 179 = <b>56.4%</b>。夜间记录多为「部署完成后回写记忆」——说明长会话常以收尾动作结束。</div>
+    </div>
+    <p>推断：他更享受<strong>无人打扰的连续时间块</strong>，而不是被会议切碎的白天。深夜也是「可以一口气把问题追到底」的时段，这与他对闭环的执念互相强化。</p>
+  </div>
+</section>
+
+<section id="s2">
+  <div class="sec-head"><div class="sec-num">02</div><h2>兴趣地图：玩，也要玩到拆开看</h2></div>
+  <p class="intro">他的兴趣有一个共同结构：<strong>先作为用户享受，再作为工程师拆解，最后做成自己的工具。</strong>很少停在「消费」这一层。</p>
+
+  <h3><span class="idx">2.1</span>游戏：不是消遣，是研究对象</h3>
+  <p>GT7 是最典型的例子。他不满足于看游戏里的仪表，而是自己写遥测记录器，解析 <b>296 字节的 UDP 广播包</b>，把 52 个字段里真正有用的 8 个挖出来做分析；随后又发现 <b>wheel_rads</b> 可以自标定轮胎半径、算滑移率与抱死，做出分段计时、理论最快圈、进站窗口、名次时间线。再接一个语音教练，实时播报「轮胎太凉，轻拖刹车升温再推」。</p>
+  <div class="ev"><span class="tag">记录</span>他会为一个「潜在空间 +0.71%」反复核对：不过滤异常圈会得到 <b>+8.48% 的假空间</b>，过滤后才是真实值；前后轴半径必须分开标定（0.3391 vs 0.3435 m），合并会引入约 1.3% 偏差。<b>这已经不是在玩游戏，是在做赛车工程。</b></div>
+  <p>Minecraft 也一样：不是为了建房，而是做 <b>MinePilot 无头 AI 玩家</b>——服务端内的 headless ServerPlayer、记忆库、权限模型、皮肤、RCON、自建配置面板。Steam 侧则是 ASF 多账号挂卡、S302、反代，把「玩游戏」变成一套可运维的基础设施。</p>
+
+  <h3><span class="idx">2.2</span>自建基础设施：把云依赖一个个拆掉</h3>
+  <p>五台机器、三十多个容器、监控、自动更新、镜像源、网盘、Docker 更新检测、旅行规划器。每晚 20:00 自动批量更新，还带 <b>dry-run 风险判定</b>：apt 要检查待删包是否包含当前内核，Arch 要检查孤儿包有没有反向依赖，iStoreOS 没有 autoremove 就跳过。这套东西已经稳定跑了近两个月，记录里全是「第 N 次执行（成功）」「耗时 48 秒」「剩余 0 可升级」。</p>
+
+  <h3><span class="idx">2.3</span>视觉与排版：一条藏得很深的审美线</h3>
+  <p>他做过梵高《向日葵》与《星月夜》融合的系列海报：奶油米、深棕、赭黄三色，衬线排版，后来又把文字换成 <b>DM Serif Display + Instrument Serif</b> 的英文艺术字体。Dashboard 侧则要求九套主题、强调色、密度、读数缩放，连「四张卡片必须并列一排，不能有一张被挤下去」都要管。</p>
+  <div class="ev"><span class="tag">审美</span>他对排版的容忍度是像素级的：中文源码换行产生的半角空格、1px 的对齐偏差、标签把一行撑成三行导致输入框错位——这些都会被指出来。但他的审美不是装饰性的，而是<b>信息密度与秩序感</b>：干净、对齐、可读、不喧哗。</div>
+
+  <h3><span class="idx">2.4</span>物理与数学：浪漫的硬核表达</h3>
+  <p>连续两天做了两版黑洞渲染器：先是 <b>blackhole-sim.html</b>，第二天是 <b>Schwarzschild-Eye.html</b>。不是调用 three.js 贴图，而是手写 WebGL2、逐像素积分零测地线，用 RK4 自适应步长，做 Novikov-Thorne 薄盘温度剖面、多普勒频移 <b>g⁴</b>、普朗克谱 × CIE 1931 色度 LUT。临界冲击参数与解析解的误差做到 <b>1.9e-7%</b>，还内置「理论阴影环」叠加当回归测试。</p>
+  <p>这类项目没有任何商业用途。<strong>它存在的理由就是「把它算对，并且好看」。</strong>这是他身上最接近浪漫的部分——只不过浪漫的表达方式是偏微分方程。</p>
+
+  <h3><span class="idx">2.5</span>信息与消费：收集癖 + 参数党</h3>
+  <p>每天拉 AI 日报，做成固定五版块（模型 / 产品 / 行业 / 论文 / 技巧）、全局连续编号、单文件零依赖的晨报仪表盘。收集银行信用卡是纯收藏，不为额度；挑二手 Windows 平板会把预算、尺寸、内存、硬盘、用途（浏览器 / WPS / 远程 / SSH）一条条列清楚，再逐轮收敛。</p>
+  <div class="ev"><span class="tag">推断</span>他喜欢的不是「拥有」，而是<b>把一个领域摸清楚的过程</b>：参数、边界、代价、替代方案。收集只是研究完成后的物证。</div>
+</section>
+
+<section id="s3">
+  <div class="sec-head"><div class="sec-num">03</div><h2>工作与学习：先建验证台，再写功能</h2></div>
+  <p class="intro">如果只看一件事来判断他的工作方式，那就是：<strong>他花在「证明它对」上的时间，往往不少于「让它对」的时间。</strong></p>
+
+  <h3><span class="idx">3.1</span>一个稳定的六步闭环</h3>
+  <div class="loop">
+    <div><div class="n">01</div><div class="t">先读现场</div><div class="d">源码、日志、二进制字符串、真实配置，不靠猜</div></div>
+    <div><div class="n">02</div><div class="t">做探针</div><div class="d">小脚本验证可行性，先拿数据再动手</div></div>
+    <div><div class="n">03</div><div class="t">写实现</div><div class="d">单文件 / 零依赖 / 向后兼容优先</div></div>
+    <div><div class="n">04</div><div class="t">建验证台</div><div class="d">pytest、Playwright、像素断言、多视口</div></div>
+    <div><div class="n">05</div><div class="t">部署硬校验</div><div class="d">md5 对齐、冒烟、线上探针</div></div>
+    <div><div class="n">06</div><div class="t">写回记忆</div><div class="d">把坑固化成规则，下次不再踩</div></div>
+  </div>
+  <p>这套闭环在不同项目里反复出现：GT7 用 <b>pytest 277 项 + 24 端点逐字节比对</b>；WUD 用 <b>425 个单测 + 14 视口 + 落地页 E2E</b>；answer-sheet-builder 用 <b>离线 11 个后端测试 + 43 项 UI 验证</b>；MirrorPilot 用 <b>多架构 CI + i18n 键对齐</b>。他不是「先写完再想怎么测」，而是<strong>测试与实现同时长出来</strong>。</p>
+
+  <h3><span class="idx">3.2</span>学习方式：需求驱动 + 对照实验</h3>
+  <p>他很少做「系统性学习」，而是遇到什么问题就钻什么问题，直到能自己复现。Arch 熄屏问题从 GNOME 的 gsd-power 追到内核 <b>consoleblank</b> 参数，再到 uinput 注入真实输入验证唤醒；Windows 更新收不到大版本，从「组织的策略」这句话追到第三方优化工具 <b>Winhance</b> 写下的注册表预设，再追到 <b>ChangeHistory.txt</b> 的铁证。每一步都不是查文档抄答案，而是<strong>设计一个能区分两种解释的实验</strong>。</p>
+  <p>他还有一个很罕见的习惯：<strong>跨项目对标前，先确认同一个概念在两边叫什么。</strong>numen 的 <b>UnstuckChain</b> 与 minepilot 的 <b>stuckRecoveries + transientBlocked</b> 命名完全不同，按对方的名字检索必然搜不到，从而得出「没有」的假结论。这条被写进了「代码调研铁律」。</p>
+
+  <h3><span class="idx">3.3</span>记忆外脑：把教训写成可执行规则</h3>
+  <p>跨项目长期记忆 592 行，几乎每一行都是「症状 → 根因 → 判据 → 正确做法」的结构。比如：</p>
+  <table>
+    <thead><tr><th style="width:26%">场景</th><th>被固化的规则</th></tr></thead>
+    <tbody>
+      <tr><td>git 提交</td><td>提交信息里不能出现反引号 / <code>$()</code>；多行一律用引号定界的 heredoc<span class="small">因为一次真实的 pathspec 报错，差点产生错误提交</span></td></tr>
+      <tr><td>Windows 脚本</td><td>.bat 里一律不写中文，纯 ASCII<span class="small">cmd.exe 按 OEM 代码页读批处理，中文会让解析直接崩</span></td></tr>
+      <tr><td>PowerShell</td><td>参数模式下 <code>+</code> 不是数组拼接，必须 <code>@($a) + @($b)</code><span class="small">曾静默丢字段、得出完全错误的结论</span></td></tr>
+      <tr><td>跨工具传文件</td><td>不用 <code>/tmp</code>，一律用工作区内相对路径<span class="small">Git Bash 与 Windows Python 的 /tmp 不是同一个目录</span></td></tr>
+      <tr><td>部署</td><td>「构建成功」≠「线上换了」；先按 head_sha 找 run，再取该 run 的 artifact<span class="small">artifact 列表顺序不可靠，id 大不代表新</span></td></tr>
+    </tbody>
+  </table>
+  <p>这不是「记性好」，而是<strong>把一次性的痛苦转化为系统性的免疫力</strong>。他的记忆不是日记，是一份不断打补丁的操作系统。</p>
+
+  <h3><span class="idx">3.4</span>代码品味：在约束里做减法</h3>
+  <p>MirrorPilot 用 Go 单二进制 + SQLite 纯 Go 驱动，避开 CGO，才能交叉编译和精简镜像；基础镜像选 alpine 而不是 distroless，因为 gcr.io 在那个网络环境里拉不到；Schwarzschild-Eye 是单文件 55KB、零依赖 WebGL2；MinePilot 面板是零依赖 Node，只用内置模块；答题卡制卡端是纯静态站点。<strong>他的技术选型第一原则不是「先进」，而是「在这五台机器的网络里真的能跑」。</strong></p>
+  <div class="ev"><span class="tag">偏好</span>能少一个依赖就少一个；能一个文件解决就不拆三个；但该拆包时（MirrorPilot 的 web / auth / secret / store）会严格保持单向依赖，让安全关键包可以被独立审阅。<b>减法在部署面，纪律在架构面。</b></div>
+</section>
+
+<section id="s4">
+  <div class="sec-head"><div class="sec-num">04</div><h2>价值排序：他把什么放在前面</h2></div>
+  <p class="intro">价值观不是他说了什么，而是他在有代价的时候选了什么。下面每一条都对应一次真实的取舍。</p>
+  <table>
+    <thead><tr><th style="width:20%">排序</th><th style="width:38%">他坚持的</th><th>他因此放弃的</th></tr></thead>
+    <tbody>
+      <tr><td><strong>自主可控</strong></td><td>自建镜像面板、自建更新检测、自建监控、自建旅行规划器</td><td>更省事的托管服务、更漂亮的商业面板、更快的上手速度</td></tr>
+      <tr><td><strong>诚实</strong></td><td>删掉「免费模型」承诺、模型名不做预设、站点不贬损上游</td><td>更好看的营销文案、更高的转化率、更「完整」的功能列表</td></tr>
+      <tr><td><strong>可验证</strong></td><td>双证据链、md5 硬门槛、部署后冒烟、线上探针</td><td>更快的交付节奏、更少的心力消耗</td></tr>
+      <tr><td><strong>署名准确</strong></td><td>保留 Apache 署名，但坚持「原创增强」而非「fork」</td><td>更简单的项目叙事、更容易的「站在巨人肩膀上」说法</td></tr>
+      <tr><td><strong>隐私</strong></td><td>密码只进本地记忆；云端文档只留地址/端口/用户名；key 走环境变量</td><td>跨设备便利、团队共享的顺手</td></tr>
+      <tr><td><strong>公平</strong></td><td>拒绝「拿免费公共节点包装成收费服务」的工具</td><td>一个可能很好用的闭源加速方案</td></tr>
+      <tr><td><strong>长期</strong></td><td>Public 仓库换不限分钟 CI；ACR 个人版只做非生产用途</td><td>短期更省事的私有仓库、付费额度</td></tr>
+    </tbody>
+  </table>
+  <div class="ev"><span class="tag">底线</span>他对「被收割」极其敏感：免费额度、开源协议、上游署名、公共节点商业化，这些事在他这里不是「细节」，而是<b>判断一个项目/一个人是否值得合作的前置条件</b>。</div>
+</section>
+
+<section id="s5">
+  <div class="sec-head"><div class="sec-num">05</div><h2>交往风格：低冗余，高信噪比</h2></div>
+  <p class="intro">他说话像在提交 issue：现象、期望、约束，三句话以内。没有寒暄，没有铺垫，也很少解释「为什么」——因为他默认你会自己去查。</p>
+
+  <h3><span class="idx">5.1</span>语言极简，动作明确</h3>
+  <div class="quotes">
+    <span>做3</span><span>继续</span><span>开始做</span><span>保留不动</span><span>还是不息屏</span><span>好的合并把</span><span>提交进仓库</span><span>整洁一点</span><span>点了没反应</span><span>为什么没下完就校验</span>
+  </div>
+  <p>这些是记录里留下的原话（含口语与笔误）。他不在乎句子是否完整，只在乎<strong>信息是否足够让对方行动</strong>。反过来，他也要求对方不要用长篇解释浪费他的时间——「少前言、先动手、有判断」是他对协作方的基本期待。</p>
+
+  <h3><span class="idx">5.2</span>反馈方式：截图 + 逐条 + 复审</h3>
+  <p>他很少给抽象评价，通常直接上截图或现象：「四容器卡片应该并列一排，现在有一张卡片被挤下去了，整个排版都变了」「手机上分页滑动没有了」「连'暂无正在下载的种子'提示都没有了」。GT7 那次，他逐条复审了 <b>10 条反馈</b>，其中 3 条要求本轮修，4 条指出「已有答案 / 你上次已修」，剩下的是「上轮已完成」。<strong>他记得自己提过什么，也会检查你是否真的改了。</strong></p>
+  <div class="ev"><span class="tag">原话</span><q>就是我跟你提过的 bug</q>——这句话出现的场景，通常是他已经给过一次机会，而问题又回来了。他的耐心是按「是否在推进」计算的，不是按次数。</div>
+
+  <h3><span class="idx">5.3</span>边界感：授权说得很清楚</h3>
+  <p>他会明确划定操作边界：「只做判断、不做修改」「这个方案先保留，不做」「保留不动」。一旦规则建立，他又会给足授权：服务器批量更新只要无风险就直接执行，<b>不要反复询问</b>。这是一种<strong>「先立法、后放权」</strong>的协作模式：边界内你自己跑，边界外必须先问。</p>
+
+  <h3><span class="idx">5.4</span>冲突风格：直接，但对事</h3>
+  <p>他否定一个方案时通常不绕弯：「这个不行，因为 X」。但他很少做人身评价，也不情绪化地重复抱怨；更多是把问题变成一个更精确的约束，然后让你重做。他也会主动给选择题（A/B/C），然后回一个「做3」——<strong>决策成本低，但要求选项本身是经过思考的。</strong></p>
+
+  <h3><span class="idx">5.5</span>信任模型：可撤销的授权</h3>
+  <p>他愿意把 root、PAT、服务器密码交给 AI，但这不等于无条件信任。他的信任结构是：<strong>先给小任务 → 看你是否能自己发现错误 → 再逐步放开权限 → 一旦发现「假绿」，信任回退。</strong>所以他会要求「拿不准就问一句」，也会在事后复盘中写下「推三小时的结论不如问一句」。</p>
+</section>
+
+<section id="s6">
+  <div class="sec-head"><div class="sec-num">06</div><h2>张力与代价：画像的另一面</h2></div>
+  <p class="intro">一个人的强项和代价通常是同一件事的两面。下面这些不是缺点清单，而是他这套性格在现实里必然产生的摩擦。</p>
+
+  <div class="tension"><b>完美主义 vs 收尾。</b>记录里频繁出现「已推送，未部署」「已部署，但容器落后一个修订」「下次部署再补」。他能把一件事的测试从 18 项推到 406 项，但也容易在「最后一公里」留下尾巴——因为下一件有趣的事已经开始。</div>
+  <div class="tension"><b>掌控 vs 放权。</b>他希望 AI 能自己判断、自己动手，但又忍不住复核每一个细节。结果是他仍然在深夜亲自做最后验收。<b>他想要的不是「少做事」，而是「事情按他的标准做成」。</b></div>
+  <div class="tension"><b>怀疑 vs 依赖。</b>他把 root 交给 AI，同时要求每条结论都有证据。这种关系更像「带一个很强的实习生」：授权很大，审计也很严。好处是质量高，代价是双方都累。</div>
+  <div class="tension"><b>广度 vs 深度。</b>50 天 167 个工作区、十几个仓库、五台服务器、游戏、设计、物理、硬件采购同时推进。兴趣驱动让他学得极快，但也意味着注意力被不断切分；有些项目停在「能跑」而不是「打磨完」。</div>
+  <div class="tension"><b>夜行的复利与代价。</b>深夜无人打扰，适合长链路排障；但 <b>56.4%</b> 的记录发生在 22 点之后，长期看是健康与判断力的隐性成本。<b>他的产出曲线很漂亮，代价曲线不在记录里。</b></div>
+  <div class="tension"><b>直率的效率与温度。</b>低冗余的表达让协作极快，但在需要安抚、解释、共情的场景里，他可能显得冷。好消息是：他对「事情」很苛刻，对「人」并不刻薄——很少看到人身评价，更多是「这个不对，重做」。</div>
+</section>
+
+<section id="s7">
+  <div class="sec-head"><div class="sec-num">07</div><h2>整体总结</h2></div>
+  <div class="final">
+    <div class="eyebrow">IN ONE PARAGRAPH</div>
+    <p><strong>DC 是一个把「可验证」当作道德底线、把「自主可控」当作生活方式的独立工程师与创作者。</strong>他像运维一样思考世界：先假设会坏，再设计证据；也像设计师一样要求世界：差 1px 也不行。他的兴趣从来不止于消费——玩游戏要拆到 UDP 包和轮胎滑移率，看黑洞要手写零测地线积分，做汉化要把 502 条文案做到中英严格对称。他说话极简，反馈极具体，信任给得谨慎、撤得果断；他不接受闭源中间商、不接受「免费节点卖钱」、不接受用营销话术掩盖能力的边界。</p>
+    <p>他的强项是<strong>把复杂系统变成可交付、可复现、可维护的东西</strong>；他的代价是<strong>很难对自己满意</strong>，也很难把控制权真正交出去。理性是他最外层的壳，浪漫藏在两个地方：深夜的黑洞渲染器，和一张梵高配色的海报。</p>
+    <p class="one">一个用「证据」对抗不确定性、用「自建」对抗被卡住、用「极简语言」驱动复杂系统的人。</p>
+  </div>
+</section>
+
+<section id="s8">
+  <div class="sec-head"><div class="sec-num">08</div><h2>附：与他协作的说明书</h2></div>
+  <p class="intro">如果这份画像只用来做一件事，那就是让下一次协作少走弯路。</p>
+  <div class="cols">
+    <div class="box">
+      <h4>DO / 这样做</h4>
+      <ul>
+        <li>先给结论，再给证据；能给表格就不给长段落。</li>
+        <li>不确定就问一句，但别问已经决定过的事。</li>
+        <li>说清楚「验收判据」，再动手。</li>
+        <li>交付时附上可复核的产物：md5、测试数、命令输出、截图。</li>
+        <li>发现方向错了，直接说「这个结论反了，因为 X」。</li>
+        <li>把踩过的坑写进记忆，而不是只修当前这一处。</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h4>DON'T / 别这样</h4>
+      <ul>
+        <li>别用「应该可以 / 理论上没问题」结案。</li>
+        <li>别推荐闭源、付费、会员制的中间件。</li>
+        <li>别把「构建成功」当成「已经上线」。</li>
+        <li>别在没读源码前断言「这个功能不存在」。</li>
+        <li>别反复询问已经授权过的安全操作。</li>
+        <li>别用寒暄和铺垫稀释信息。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p><b>材料与方法：</b>跨项目长期记忆 <code>MEMORY.md</code>（592 行 / 117,126 字节）、86 个记忆目录下的 206 份日志、身份与偏好文件（<code>USER.md</code> / <code>SOUL.md</code> / <code>IDENTITY.md</code>），以及 2026-08-30 至 2026-10-18 的 167 个会话工作区。小时分布按日志文件写入时间统计，样本 206；项目与事件均可在对应日期的日志中核对。</p>
+  <p><b>局限：</b>记录由工作产生，因此对「工作人格」的覆盖远高于私人生活；部分用户原话来自记忆中的转述，标点与口语可能有整理痕迹；「推断」段落是基于行为的合理外推，不等同于本人自述。画像会随新记录变化，不应被当作固定标签。</p>
+</footer>
+
+</main>
+</div>
+</div>
+</body>
+</html>

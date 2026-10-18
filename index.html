@@ -174,6 +174,9 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    /* 两簇之间的兜底间距：触屏下链接会涨到 44 高，窄屏上 space-between
+       会被挤到 0（实测 320/360 两簇直接贴住），显式给一个下限。 */
+    gap: 12px;
     padding: 16px clamp(20px, 5vw, 64px);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
@@ -205,6 +208,32 @@
     transition: width 0.25s;
   }
   .nav-links a:hover::after { width: 100%; }
+  /* 「AI眼中的我」—— 三枚胶囊里的第三枚，放在「项目」右侧。
+     与 .nav-gh 同一套骨架（胶囊 / 1px 边框 / 13px），只多一层强调：
+     id 选择器压过 .nav-links a 的通用规则，并去掉那条 hover 下划线
+     （胶囊有自己的边框反馈，再加下划线是两套视觉语言打架）。
+     粒子点用 accent 系渐变，暗示「AI / 数据」这一层含义。 */
+  .nav-links a.nav-ai {
+    gap: 7px;
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 13px;
+    color: var(--text);
+    /* 锁住单行：触屏下 320 宽时容器会把文字挤成两行（实测 94×72），
+       胶囊变方块。nowrap + flex:none 让它宁可挤邻居也不自身折行。 */
+    white-space: nowrap;
+    flex: none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .nav-links a.nav-ai::after { display: none; }
+  .nav-links a.nav-ai:hover { border-color: var(--border-strong); background: var(--panel); }
+  .nav-links a.nav-ai .spark {
+    width: 13px; height: 13px; flex: none;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    /* 四角星：用 clip-path 切出来，省一个 SVG 节点 */
+    clip-path: polygon(50% 0%, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0% 50%, 39% 39%);
+  }
   .nav-gh {
     display: inline-flex; align-items: center; gap: 7px;
     padding: 8px 14px;
@@ -830,6 +859,18 @@
   a, button { -webkit-tap-highlight-color: transparent; }
 
   @media (hover: none) {
+    /* 四件东西（三枚板块链接 + AI胶囊 + 主题按钮）在窄屏上排不进一行，
+       flex 默认会把链接压到 40~43px，跌破 44 触控下限（实测 361~374px 区间
+       全部中招）。所以这里做两件事，替代「猜一个断点」：
+         ① .nav-links 允许换行：装不下就换到第二行，而不是压窄每个链接；
+         ② 链接 flex:none：明令禁止压缩，44 是底线不是建议值。
+       这样换行时机由真实空间决定，不必手动维护断点 —— 375 起自然回到单行。
+       .nav 用 flex-start：换行后导航变两行，若还居中会把主题按钮
+       垂直拽到两行中间，偏离它「右上角」的既定位置。
+       单行时两个子项同为 44 高，flex-start 与 center 视觉完全一致。 */
+    .nav { align-items: flex-start; }
+    .nav-links { flex-wrap: wrap; justify-content: center; gap: 6px 10px; }
+    .nav-links a { flex: none; }
     /* 导航链接：盒高顶到 44、左右 padding 撑到 44。
        下划线 ::after 原本 bottom:-6px 是相对 24px 高的盒子算的，
        盒子变高后要往里收，否则它会被 padding 顶到离文字很远的地方。 */
@@ -843,6 +884,9 @@
     /* inset 是相对「padding box」算的，1px 边框两边各吃掉 1px，
        所以 -9px 实测只有 41（24+18），要 -10px 才够 44（24+20）。 */
     .vqr-btn::after { content: ""; position: absolute; inset: -11px; }
+    /* AI眼中的我：本身已是胶囊（padding 8/14 + 13px 行盒 ≈ 35 高），
+       触屏下把纵向 padding 提到 13 顶到 44，横向保持 14 不挤。 */
+    .nav-links a.nav-ai { padding: 13px 14px; }
   }
 
   /* 叠加小字 / 徽标 / 提示文字统一提到 12px（原本 11~11.5，手机上偏挤） */
@@ -922,6 +966,7 @@
       <a href="#videos">视频</a>
       <a href="#photos">摄影</a>
       <a href="#projects">项目</a>
+      <a class="nav-ai" href="ai-profile/" aria-label="打开 AI 眼中的我"><i class="spark" aria-hidden="true"></i>AI眼中的我</a>
     </div>
     <button class="theme-toggle" id="themeToggle" type="button" aria-label="切换日间/夜间主题" title="切换主题">
       <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
