@@ -144,6 +144,27 @@
     content:"";width:7px;height:7px;border-radius:50%;
     background:var(--accent-2);flex:none;
   }
+  /* 主题切换：与主页共用 localStorage["theme"]，读的口径写在 <head> 的脚本里。
+     同一枚按钮在两处出现但永不同屏 —— 桌面（>900px）在顶部提示条右端；
+     窄屏（<=900px）挪进吸顶章节条，因为提示条会随页面滚走，
+     而这一页手机上有近 18000px 高，切个主题不该先把人赶回页首。
+     图标随当前主题只留一枚：深色显示太阳（点了转日间），浅色显示月亮。 */
+  .themebtn{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:44px;height:44px;flex:none;padding:0;
+    border:1px solid var(--line);border-radius:999px;
+    background:var(--surface);color:var(--ink-2);
+    cursor:pointer;
+    transition:border-color .2s,color .2s;
+  }
+  .themebtn:hover{border-color:var(--accent);color:var(--accent);}
+  /* 按钮是可聚焦元素，键盘 Tab 过来要看得见落点 */
+  .themebtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .themebtn svg{width:17px;height:17px;}
+  .themebtn .ic-moon{display:none;}
+  html[data-theme="light"] .themebtn .ic-sun{display:none;}
+  html[data-theme="light"] .themebtn .ic-moon{display:block;}
+  .pagetop .themebtn{grid-column:3;justify-self:end;}
   .wrap{max-width:1180px;margin:0 auto;padding:0 28px 96px;}
   /* header */
   header.top{
@@ -312,18 +333,26 @@
     .layout{grid-template-columns:1fr;gap:0;}
     nav.toc{display:none;}
     /* 吸顶：滚过顶部提示条后一直贴在视口顶端。
-       z-index 要给足 —— 页面里有 sticky 的目录与若干卡片，别被它们盖住。 */
+       z-index 要给足 —— 页面里有 sticky 的目录与若干卡片，别被它们盖住。
+       壳只负责吸顶与左右分栏，横向滚动下沉到内层 .toc-scroll：
+       这样主题按钮是 flex 的固定项，不会跟着章节 chips 一起被滚出屏幕
+       （若直接把按钮塞进滚动容器，用户滑到后面的章节它就消失了）。 */
     .tocbar{
       position:sticky;top:0;z-index:30;
       display:flex;align-items:center;gap:7px;
       padding:5px 14px;
       background:var(--card);
       border-bottom:1px solid var(--line);
+    }
+    .tocbar .toc-scroll{
+      display:flex;align-items:center;gap:7px;
+      flex:1 1 auto;min-width:0;
       overflow-x:auto;overflow-y:hidden;
       -webkit-overflow-scrolling:touch;
       scrollbar-width:none;
     }
-    .tocbar::-webkit-scrollbar{display:none;}
+    .tocbar .toc-scroll::-webkit-scrollbar{display:none;}
+    .tocbar .themebtn{margin-left:1px;}
     /* 触控目标按 44 下限给（Apple HIG / WCAG 2.5.5），chips 虽小也别缩水 */
     .tocbar a{
       flex:none;display:inline-flex;align-items:center;
@@ -338,8 +367,10 @@
       font-family:var(--mono);font-size:13px;
       color:var(--accent);border-color:var(--accent);
     }
-    /* 顶部提示条里的返回与吸顶条重复了，窄屏下隐掉，让提示条专心放声明 */
-    .pagetop .backlink{display:none;}
+    /* 顶部提示条里的返回与吸顶条重复了，窄屏下隐掉，让提示条专心放声明。
+       主题按钮同理 —— 窄屏那枚已经进了吸顶条，提示条这枚就别出现了。 */
+    .pagetop .backlink,
+    .pagetop .themebtn{display:none;}
     /* 锚点跳转要躲开吸顶条，否则章节标题会被压在条下面（条高 54 + 余量 8） */
     section{scroll-margin-top:62px;}
     .loop{grid-template-columns:1fr 1fr;}
@@ -377,6 +408,10 @@
   <div class="pagetop-in">
     <a class="backlink" href="../">← 返回主页</a>
     <p class="disclaimer">一句话生成，纯属图一乐</p>
+    <button class="themebtn" type="button" aria-label="切换日间/夜间主题" title="切换主题">
+      <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+      <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
   </div>
 </div>
 <!-- 手机端章节条：桌面靠左侧那列 sticky 目录导航，但它在 <=900px 被隐藏了，
@@ -384,7 +419,8 @@
      吸顶的横向滚动条，把「返回」和全部章节收进去，滚到哪儿都能换章。
      （章节链接与下面 nav.toc 重复了一份，两者按视口互斥显示 —— 与其用
      CSS 把同一份 DOM 搬来搬去，不如各管一段，改章节名时记得两处同步。） -->
-<nav class="tocbar" aria-label="章节导航">
+<div class="tocbar">
+<nav class="toc-scroll" aria-label="章节导航">
   <a class="tb-back" href="../" aria-label="返回主页">← 返回</a>
   <a href="#s0"><span>00</span>方法与边界</a>
   <a href="#s1"><span>01</span>性格底色</a>
@@ -396,6 +432,11 @@
   <a href="#s7"><span>07</span>整体总结</a>
   <a href="#s8"><span>08</span>协作说明书</a>
 </nav>
+<button class="themebtn" type="button" aria-label="切换日间/夜间主题" title="切换主题">
+  <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+  <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+</button>
+</div>
 <div class="wrap">
 
 <header class="top">
@@ -672,5 +713,29 @@
 </main>
 </div>
 </div>
+<script>
+  /* 主题切换：与主页共用 localStorage["theme"]，点完立刻写回，
+     所以从子页切完再回主页，两边读到的偏好是一致的。
+     两枚按钮（顶部提示条 / 吸顶章节条）按视口互斥显示，这里对全部
+     .themebtn 绑同一个处理函数，不必判断当前哪一枚可见。 */
+  (function () {
+    var root = document.documentElement;
+    var btns = document.querySelectorAll(".themebtn");
+    function relabel() {
+      var dark = root.getAttribute("data-theme") !== "light";
+      var txt = dark ? "切换到日间主题" : "切换到夜间主题";
+      for (var i = 0; i < btns.length; i++) btns[i].setAttribute("aria-label", txt);
+    }
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].addEventListener("click", function () {
+        var next = root.getAttribute("data-theme") === "light" ? "dark" : "light";
+        root.setAttribute("data-theme", next);
+        try { localStorage.setItem("theme", next); } catch (e) {}
+        relabel();
+      });
+    }
+    relabel();
+  })();
+</script>
 </body>
 </html>
