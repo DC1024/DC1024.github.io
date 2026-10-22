@@ -2082,13 +2082,15 @@
 
     /* ---------- 「AI眼中的我」解锁 ----------
        入口默认不在导航上（CSS 里 display:none）。要走完 ai-profile/gate.html
-       那道问答题，答对了才由那边写 localStorage，回到主页时这里把入口放出来。
+       那道问答题，答对了才由那边写 localStorage，之后主页就把入口放出来。
 
        两个标记要分清：
        - localStorage 是长期状态：解锁过就一直解锁，之后每次进主页按钮本来就在，
          不该再抖一次动画；
-       - URL 上的 ?ai=1 表示「就是刚才答完题跳回来的这一次」，只有它才播解锁动效。
-         播完立刻用 replaceState 把参数抹掉，刷新时不会重播。 */
+       - URL 上的 ?ai=1 表示「就是刚才答完题的那一次」，只有它才播解锁动效，
+         播完立刻用 replaceState 把参数抹掉，刷新时不会重播。
+         注：gate 页现在是答对后就地把按钮展示出来、不再跳回主页，所以正常流程
+         不会带这个参数；留着是给手工拼的链接 / 旧书签兜底，不是死代码。 */
     (function () {
       var KEY = "aiProfileUnlocked";
       var ai = document.querySelector(".nav-ai");

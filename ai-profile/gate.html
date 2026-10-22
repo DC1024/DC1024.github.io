@@ -198,7 +198,7 @@
     80% { transform: translateX(3px); }
   }
   .gate.shake { animation: gateShake 0.4s ease-in-out; }
-  /* 答对：星芒亮一圈，按钮文案换成「验证通过」后跳转 */
+  /* 答对：星芒亮一圈，随后题目淡出、按钮就地长出来 */
   @keyframes sparkPass {
     0% { transform: scale(1); filter: brightness(1); }
     45% { transform: scale(1.25); filter: brightness(1.5); }
@@ -206,9 +206,67 @@
   }
   .gate.passed .spark-big { animation: sparkPass 0.6s ease-out both; }
 
+  /* ===== 解锁后就地展示，不跳转 =====
+     答对后本来是跳回主页、让主页播解锁动效；现在改成就地换：
+     题目区淡出并移出布局流，「AI 眼中的我」按钮直接长在这张卡里。
+     按钮骨架（胶囊 / 1px 边框 / 999 圆角 / hover 抬 1px）与解锁动效
+     都跟主页 .nav-ai 同源：同一组 keyframes 名字、同一条 cubic-bezier，
+     所以「在哪解锁」看着是同一个动作。 */
+  .qa { transition: opacity 0.26s ease, transform 0.26s ease; }
+  .gate.hiding .qa { opacity: 0; transform: translateY(-8px); }
+  /* 淡完才真正 display:none —— 直接 none 会让卡片高度瞬间塌陷、按钮往上蹦 */
+  .gate.hiding.done .qa { display: none; }
+
+  .unlock { display: none; }
+  .unlock.on { display: block; }
+  .unlock-lead { color: var(--muted); font-size: 13.5px; margin-bottom: 16px; }
+
+  .unlock-btn {
+    position: relative;
+    display: inline-flex; align-items: center; gap: 8px;
+    min-height: 44px;                        /* 触屏命中区，与输入框/提交按钮一致 */
+    padding: 11px 22px;
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    font-size: 15px; font-weight: 600;
+    color: var(--text); text-decoration: none;
+    background: var(--panel-hover);
+    transition: transform 0.15s, box-shadow 0.2s, border-color 0.2s;
+  }
+  .unlock-btn:hover { transform: translateY(-2px); border-color: var(--accent); box-shadow: 0 12px 28px rgba(2, 110, 190, 0.22); }
+  .unlock-btn:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 3px; }
+  .unlock-btn .spark {
+    width: 15px; height: 15px; flex: none;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    clip-path: polygon(50% 0%, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0% 50%, 39% 39%);
+  }
+  /* 光晕走 ::before，inset:-10px 让它溢出按钮边缘，像是从星芒本身透出来的光 */
+  .unlock-btn::before {
+    content: "";
+    position: absolute; inset: -10px;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.45), rgba(129, 140, 248, 0) 70%);
+    opacity: 0; pointer-events: none;
+  }
+  /* 与主页 aiUnlockIn / aiUnlockHalo 逐帧一致：淡入 + 上浮 10px + 0.94→1.03→1 缩放 */
+  @keyframes aiUnlockIn {
+    0%   { opacity: 0; transform: translateY(10px) scale(0.94); }
+    60%  { opacity: 1; transform: translateY(-2px) scale(1.03); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes aiUnlockHalo {
+    0%   { opacity: 0;   transform: scale(0.7); }
+    45%  { opacity: 0.5; transform: scale(1.12); }
+    100% { opacity: 0;   transform: scale(1.45); }
+  }
+  .unlock-btn.unlocking { animation: aiUnlockIn 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) both; }
+  .unlock-btn.unlocking::before { animation: aiUnlockHalo 0.6s ease-out both; }
+
   @media (prefers-reduced-motion: reduce) {
     .gate, .gate.shake, .gate.passed .spark-big { animation: none; }
-    .submit:hover { transform: none; }
+    .submit:hover, .unlock-btn:hover { transform: none; }
+    .unlock-btn.unlocking, .unlock-btn.unlocking::before { animation: none; }
+    .qa { transition: none; }
   }
 </style>
 </head>
@@ -217,24 +275,35 @@
 
   <main class="gate" id="gate">
     <i class="spark-big" aria-hidden="true"></i>
-    <h1>解锁「AI 眼中的我」</h1>
-    <p class="q">
-      这个网站每个板块标题前都有一组彩色数字：<span class="mark m0">00</span> 是琥珀黄、
-      <span class="mark m1">01</span> 是紫罗兰、<span class="mark m2">02</span> 是绯红。
-      你知道这组配色的灵感，来自哪部作品吗？
-    </p>
-    <p class="hint">填作品名就行 —— 缩写、译名、原文都认。</p>
+    <h1 id="title">解锁「AI 眼中的我」</h1>
 
-    <form id="gateForm" novalidate>
-      <div class="row">
-        <label class="sr-only" for="answer">那部作品的名字</label>
-        <input type="text" id="answer" name="answer" placeholder="那部作品的名字…"
-               autocomplete="off" autocapitalize="off" spellcheck="false" autofocus>
-        <button class="submit" id="submitBtn" type="submit">验证并解锁</button>
-      </div>
-    </form>
+    <!-- 答题区：解锁后被 .gate.hiding.done 移出布局流 -->
+    <div class="qa" id="qa">
+      <p class="q">
+        这个网站每个板块标题前都有一组彩色数字：<span class="mark m0">00</span> 是琥珀黄、
+        <span class="mark m1">01</span> 是紫罗兰、<span class="mark m2">02</span> 是绯红。
+        你知道这组配色的灵感，来自哪部作品吗？
+      </p>
+      <p class="hint">填作品名就行 —— 缩写、译名、原文都认。</p>
 
-    <p class="msg" id="msg" role="status" aria-live="polite"></p>
+      <form id="gateForm" novalidate>
+        <div class="row">
+          <label class="sr-only" for="answer">那部作品的名字</label>
+          <input type="text" id="answer" name="answer" placeholder="那部作品的名字…"
+                 autocomplete="off" autocapitalize="off" spellcheck="false" autofocus>
+          <button class="submit" id="submitBtn" type="submit">验证并解锁</button>
+        </div>
+      </form>
+
+      <p class="msg" id="msg" role="status" aria-live="polite"></p>
+    </div>
+
+    <!-- 解锁区：默认 display:none，答对后就地展示，不再跳转 -->
+    <div class="unlock" id="unlock">
+      <p class="unlock-lead">答对了 —— 那三个数字，确实来自那部作品。</p>
+      <a class="unlock-btn" id="unlockBtn" href="index.html"><i class="spark" aria-hidden="true"></i>AI眼中的我</a>
+    </div>
+
     <a class="back" href="../index.html">← 先回主页</a>
   </main>
 
@@ -246,6 +315,10 @@
     var input = document.getElementById("answer");
     var btn = document.getElementById("submitBtn");
     var msg = document.getElementById("msg");
+    var title = document.getElementById("title");
+    var unlock = document.getElementById("unlock");
+    var unlockBtn = document.getElementById("unlockBtn");
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     /* 归一化：NFKC 把全角字母/数字折成半角（ＥＶＡ → EVA），
        再去掉所有空白和常见标点，最后转小写 —— 「E v a」「EVA!」「  eva  」都等价。 */
@@ -268,17 +341,35 @@
       "エヴァンゲリオン"
     ];
 
-    // 已经解锁过：直接给个入口，不必再答一遍
+    /* 就地展示解锁结果：题目区淡出 → 从布局流里摘掉 → 按钮带着解锁动效长出来。
+       动画结束后把 .unlocking 摘掉，免得元素一直挂在动画的终态上。
+       降低动效时整段跳过动画，直接换。 */
+    function swapIn(animate) {
+      gate.classList.add("hiding");
+      setTimeout(function () {
+        gate.classList.add("done");
+        unlock.classList.add("on");
+        if (animate && !reduce) {
+          unlockBtn.classList.add("unlocking");
+          unlockBtn.addEventListener("animationend", function (e) {
+            // 光晕（::before）也会触发 animationend，只认按钮本体那一条
+            if (e.target === unlockBtn && e.animationName === "aiUnlockIn") {
+              unlockBtn.classList.remove("unlocking");
+            }
+          });
+        }
+        // 焦点交给刚出现的按钮，键盘用户不必重新 tab 一遍
+        try { unlockBtn.focus({ preventScroll: true }); } catch (err) { unlockBtn.focus(); }
+      }, reduce ? 0 : 280);   // 等题目淡完再换行，否则卡片高度会突变
+    }
+
+    // 已经解锁过：不再出题，直接把入口摆出来（也不必再播一次动效）
     var already = false;
     try { already = localStorage.getItem(KEY) === "1"; } catch (e) {}
     if (already) {
-      btn.textContent = "直接进入 →";
-      msg.className = "msg ok";
-      msg.textContent = "你已经解锁过了。";
-      form.addEventListener("submit", function (e) {
-        e.preventDefault();
-        location.href = "index.html";
-      });
+      title.textContent = "「AI 眼中的我」已解锁";
+      gate.classList.add("hiding", "done");
+      unlock.classList.add("on");
       return;
     }
 
@@ -313,19 +404,20 @@
         return;
       }
 
-      // 通过：清掉错误态，锁住按钮防止连点，播一下星芒再跳
+      // 通过：清掉错误态，锁住按钮防止连点，星芒亮一圈后就地换成入口
       input.removeAttribute("aria-invalid");
       msg.className = "msg ok";
       msg.textContent = "验证通过，正在解锁…";
       btn.disabled = true;
       btn.textContent = "验证通过";
       gate.classList.add("passed");
-      try { localStorage.setItem(KEY, "1"); } catch (err) { /* 隐私模式写不进也不影响本次跳转 */ }
+      try { localStorage.setItem(KEY, "1"); } catch (err) { /* 隐私模式写不进也不影响本次解锁 */ }
 
-      // 回主页带上 ?ai=1 —— 主页靠它判断「就是这一次刚解锁」，才播解锁动效
+      // 420ms ≈ 星芒闪到七成时开始换，两段动作叠着走比排队等更顺
       setTimeout(function () {
-        location.href = "../index.html?ai=1";
-      }, 620);
+        title.textContent = "「AI 眼中的我」已解锁";
+        swapIn(true);
+      }, reduce ? 0 : 420);
     });
 
     input.addEventListener("input", function () {
