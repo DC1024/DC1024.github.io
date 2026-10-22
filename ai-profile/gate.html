@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>解锁「AI 眼中的我」 · DC</title>
+<meta name="description" content="答对一道关于本站的小问题，解锁「AI 眼中的我」入口。">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<script>
+  /* 主题跟随主页：读同一个 localStorage["theme"]，判决口径与主页逐字一致
+     —— 有偏好就用偏好，没有就按访问时的本地时间（8:00–17:59 日间，其余夜间）。
+     两处口径只要有一处不同，跨页跳转就会闪一下主题，所以改一个必须改另一个。
+     脚本同步内联在 <head>、早于 body 解析，因此不会看到浅色闪成深色。 */
+  (function () {
+    try {
+      var t = localStorage.getItem("theme");
+      if (t !== "light" && t !== "dark") {
+        var h = new Date().getHours();
+        t = (h >= 8 && h < 18) ? "light" : "dark";
+      }
+      document.documentElement.setAttribute("data-theme", t);
+    } catch (e) {
+      document.documentElement.setAttribute("data-theme", "dark");
+    }
+  })();
+</script>
+<style>
+  /* 变量与主页 index.html 逐值对齐（同一套命名、同一套取值）——
+     跨页跳转时底色、强调色、边框完全一致，看不出是两个文件。
+     对比度也沿用主页那套已实测 WCAG AA 的组合。 */
+  :root {
+    color-scheme: dark;
+    --bg: #070b14;
+    --bg-2: #0b1120;
+    --panel: rgba(255, 255, 255, 0.045);
+    --panel-hover: rgba(255, 255, 255, 0.07);
+    --border: rgba(255, 255, 255, 0.09);
+    --border-strong: rgba(120, 180, 255, 0.28);
+    --text: #e7eef8;
+    --muted: #8a9bb5;
+    --faint: #78869e;
+    --accent: #38bdf8;
+    --accent-2: #818cf8;
+    --accent-ink: #38bdf8;
+    --green: #34d399;
+    --red: #f87171;
+    --radius: 16px;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", Roboto, Helvetica, Arial, sans-serif;
+  }
+  html[data-theme="light"] {
+    color-scheme: light;
+    --bg: #f3f7fd;
+    --bg-2: #e6eef9;
+    --panel: rgba(255, 255, 255, 0.78);
+    --panel-hover: #ffffff;
+    --border: rgba(20, 45, 90, 0.12);
+    --border-strong: rgba(2, 110, 190, 0.35);
+    --text: #0d1b2e;
+    --muted: #4a5b74;
+    --faint: #5a6a85;
+    --accent: #0284c7;
+    --accent-2: #4f46e5;
+    --accent-ink: #0369a1;
+    --green: #059669;
+    --red: #dc2626;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+  /* 背景光晕与主页 .backdrop 同款（只是范围收小），保证视觉是同一个站 */
+  .backdrop {
+    position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(900px 600px at 12% -5%, rgba(56, 189, 248, 0.16), transparent 60%),
+      radial-gradient(800px 600px at 100% 0%, rgba(129, 140, 248, 0.14), transparent 55%),
+      linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+  }
+
+  .gate {
+    width: 100%; max-width: 480px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--panel);
+    padding: clamp(24px, 4vw, 36px);
+    /* 与主页卡片进场同一条曲线，纯属手感统一 */
+    animation: gateIn 0.5s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  }
+  @keyframes gateIn { from { opacity: 0; transform: translateY(14px); } }
+
+  .gate .spark-big {
+    display: block;
+    width: 26px; height: 26px;
+    margin-bottom: 14px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    clip-path: polygon(50% 0%, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0% 50%, 39% 39%);
+  }
+  .gate h1 {
+    font-size: clamp(19px, 2.4vw, 22px);
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    margin-bottom: 10px;
+  }
+  .q {
+    color: var(--muted);
+    font-size: 14.5px;
+    margin-bottom: 4px;
+  }
+  .q .mark { font-family: var(--mono); font-size: 13px; font-weight: 700; }
+  /* 题目里这三个数字直接上机体色 —— 文字说「00 是琥珀黄」，数字本身就得是琥珀黄，
+     否则描述和视觉对不上。浅色底上原色偏淡（#F5B301 只有 2:1），压深一档保证可读。 */
+  .q .mark.m0 { color: #F5B301; }
+  .q .mark.m1 { color: #9C6ADE; }
+  .q .mark.m2 { color: #E53935; }
+  html[data-theme="light"] .q .mark.m0 { color: #A86F00; }
+  html[data-theme="light"] .q .mark.m1 { color: #7A4BC8; }
+  html[data-theme="light"] .q .mark.m2 { color: #C62828; }
+  .hint {
+    color: var(--faint);
+    font-size: 12.5px;
+    margin-bottom: 18px;
+  }
+
+  .row { display: flex; gap: 10px; }
+  @media (max-width: 420px) { .row { flex-direction: column; } }
+  input[type="text"] {
+    flex: 1; min-width: 0;
+    min-height: 44px;
+    padding: 10px 14px;
+    font-family: inherit; font-size: 14.5px;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    transition: border-color 0.2s;
+  }
+  input[type="text"]:focus-visible { outline: none; border-color: var(--border-strong); }
+  input[type="text"]::placeholder { color: var(--faint); }
+  input[type="text"][aria-invalid="true"] { border-color: var(--red); }
+  .submit {
+    flex: none;
+    min-height: 44px;
+    padding: 10px 20px;
+    font-family: inherit; font-size: 14.5px; font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    border: 0; border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+  }
+  /* 视觉隐藏但保留在无障碍树里：输入框靠它拿到名字 */
+  .sr-only {
+    position: absolute; width: 1px; height: 1px;
+    overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+  .submit:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(2, 110, 190, 0.22); }
+  .submit:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 2px; }
+  .submit[disabled] { opacity: 0.6; cursor: default; transform: none; box-shadow: none; }
+
+  .msg {
+    min-height: 22px;
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--faint);
+  }
+  .msg.err { color: var(--red); }
+  .msg.ok { color: var(--green); }
+
+  .back {
+    display: inline-block;
+    margin-top: 18px;
+    color: var(--muted);
+    font-size: 13px;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .back:hover { color: var(--accent-ink); }
+
+  /* 答错：整张卡横向抖一下（0.4s），不刷新、不跳转、不清空输入 */
+  @keyframes gateShake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-7px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(3px); }
+  }
+  .gate.shake { animation: gateShake 0.4s ease-in-out; }
+  /* 答对：星芒亮一圈，按钮文案换成「验证通过」后跳转 */
+  @keyframes sparkPass {
+    0% { transform: scale(1); filter: brightness(1); }
+    45% { transform: scale(1.25); filter: brightness(1.5); }
+    100% { transform: scale(1); filter: brightness(1); }
+  }
+  .gate.passed .spark-big { animation: sparkPass 0.6s ease-out both; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .gate, .gate.shake, .gate.passed .spark-big { animation: none; }
+    .submit:hover { transform: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="backdrop"></div>
+
+  <main class="gate" id="gate">
+    <i class="spark-big" aria-hidden="true"></i>
+    <h1>解锁「AI 眼中的我」</h1>
+    <p class="q">
+      这个网站每个板块标题前都有一组彩色数字：<span class="mark m0">00</span> 是琥珀黄、
+      <span class="mark m1">01</span> 是紫罗兰、<span class="mark m2">02</span> 是绯红。
+      你知道这组配色的灵感，来自哪部作品吗？
+    </p>
+    <p class="hint">填作品名就行 —— 缩写、译名、原文都认。</p>
+
+    <form id="gateForm" novalidate>
+      <div class="row">
+        <label class="sr-only" for="answer">那部作品的名字</label>
+        <input type="text" id="answer" name="answer" placeholder="那部作品的名字…"
+               autocomplete="off" autocapitalize="off" spellcheck="false" autofocus>
+        <button class="submit" id="submitBtn" type="submit">验证并解锁</button>
+      </div>
+    </form>
+
+    <p class="msg" id="msg" role="status" aria-live="polite"></p>
+    <a class="back" href="../index.html">← 先回主页</a>
+  </main>
+
+<script>
+  (function () {
+    var KEY = "aiProfileUnlocked";
+    var gate = document.getElementById("gate");
+    var form = document.getElementById("gateForm");
+    var input = document.getElementById("answer");
+    var btn = document.getElementById("submitBtn");
+    var msg = document.getElementById("msg");
+
+    /* 归一化：NFKC 把全角字母/数字折成半角（ＥＶＡ → EVA），
+       再去掉所有空白和常见标点，最后转小写 —— 「E v a」「EVA!」「  eva  」都等价。 */
+    function norm(s) {
+      return String(s == null ? "" : s)
+        .normalize("NFKC")
+        .replace(/[\s·、,，。.、!！?？\-_—~～"'“”‘’]/g, "")
+        .toLowerCase();
+    }
+
+    /* 正确答案 EVA。用「包含」而不是「全等」匹配：用户可能写成
+       「EVA 新世纪福音战士」这类带前后缀的说法，全等会把它们判错。
+       关键词之间本身有包含关系（新世纪福音战士 ⊃ 福音战士），列全只为可读。 */
+    var KEYS = [
+      "eva",
+      "evangelion",
+      "新世纪福音战士",
+      "福音战士",
+      "天鹰战士",
+      "エヴァンゲリオン"
+    ];
+
+    // 已经解锁过：直接给个入口，不必再答一遍
+    var already = false;
+    try { already = localStorage.getItem(KEY) === "1"; } catch (e) {}
+    if (already) {
+      btn.textContent = "直接进入 →";
+      msg.className = "msg ok";
+      msg.textContent = "你已经解锁过了。";
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        location.href = "index.html";
+      });
+      return;
+    }
+
+    function shake() {
+      gate.classList.remove("shake");
+      void gate.offsetWidth;              // 强制回流，否则连点两次不会重播
+      gate.classList.add("shake");
+    }
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();                 // 全程不刷新页面
+      if (btn.disabled) return;
+
+      var v = norm(input.value);
+      if (!v) {
+        input.setAttribute("aria-invalid", "true");
+        msg.className = "msg err";
+        msg.textContent = "先填一个答案吧。";
+        shake();
+        input.focus();
+        return;
+      }
+
+      var ok = KEYS.some(function (k) { return v.indexOf(k) >= 0; });
+
+      if (!ok) {
+        input.setAttribute("aria-invalid", "true");
+        msg.className = "msg err";
+        msg.textContent = "还不对，再想想～ 提示：它常被缩写成三个字母。";
+        shake();
+        input.select();
+        return;
+      }
+
+      // 通过：清掉错误态，锁住按钮防止连点，播一下星芒再跳
+      input.removeAttribute("aria-invalid");
+      msg.className = "msg ok";
+      msg.textContent = "验证通过，正在解锁…";
+      btn.disabled = true;
+      btn.textContent = "验证通过";
+      gate.classList.add("passed");
+      try { localStorage.setItem(KEY, "1"); } catch (err) { /* 隐私模式写不进也不影响本次跳转 */ }
+
+      // 回主页带上 ?ai=1 —— 主页靠它判断「就是这一次刚解锁」，才播解锁动效
+      setTimeout(function () {
+        location.href = "../index.html?ai=1";
+      }, 620);
+    });
+
+    input.addEventListener("input", function () {
+      input.removeAttribute("aria-invalid");
+      if (msg.classList.contains("err")) { msg.className = "msg"; msg.textContent = ""; }
+    });
+  })();
+</script>
+</body>
+</html>
