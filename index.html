@@ -208,40 +208,8 @@
     transition: width 0.25s;
   }
   .nav-links a:hover::after { width: 100%; }
-  /* 「AI眼中的我」—— 三枚胶囊里的第三枚，放在「项目」右侧。
-     与 .nav-gh 同一套骨架（胶囊 / 1px 边框 / 13px），只多一层强调：
-     id 选择器压过 .nav-links a 的通用规则，并去掉那条 hover 下划线
-     （胶囊有自己的边框反馈，再加下划线是两套视觉语言打架）。
-     粒子点用 accent 系渐变，暗示「AI / 数据」这一层含义。 */
-  .nav-links a.nav-ai {
-    /* 未解锁时整枚胶囊移出布局流：.nav-links 是 flex，少一个子项自然收缩，
-       不会留下塌陷或空白格子。解锁后由 JS 加 .is-unlocked 变回 inline-flex。 */
-    display: none;
-    position: relative;
-    gap: 7px;
-    padding: 8px 14px;
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    font-size: 13px;
-    color: var(--text);
-    /* 锁住单行：触屏下 320 宽时容器会把文字挤成两行（实测 94×72），
-       胶囊变方块。nowrap + flex:none 让它宁可挤邻居也不自身折行。 */
-    white-space: nowrap;
-    flex: none;
-    transition: border-color 0.2s, background 0.2s;
-  }
-  .nav-links a.nav-ai::after { display: none; }
-  .nav-links a.nav-ai:hover { border-color: var(--border-strong); background: var(--panel); }
-  .nav-links a.nav-ai .spark {
-    width: 13px; height: 13px; flex: none;
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    /* 四角星：用 clip-path 切出来，省一个 SVG 节点 */
-    clip-path: polygon(50% 0%, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0% 50%, 39% 39%);
-  }
-  .nav-links a.nav-ai.is-unlocked { display: inline-flex; }
-
-  /* 星芒按钮：AI 入口的「上锁形态」—— 只留一枚十字星芒，不带文字，
-     点进去是 ai-profile/gate.html 的问答页。与 .nav-ai / .nav-gh 同一套
+  /* 星芒按钮：AI 入口的唯一形态 —— 只留一枚十字星芒，不带文字，
+     点进去是 ai-profile/gate.html 的问答页。与 .nav-gh 同一套
      胶囊骨架（1px 边框 / 999px 圆角 / hover 抬 1px），只是把 padding 换成
      正方形尺寸，视觉重量和左右邻居保持一致。
      .nav-links a 已经给了 inline-flex + align-items:center，这里只补居中。 */
@@ -259,30 +227,6 @@
     background: linear-gradient(135deg, var(--accent), var(--accent-2));
     clip-path: polygon(50% 0%, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0% 50%, 39% 39%);
   }
-
-  /* 解锁动效（0.6s）：淡入 + 上浮 + 轻微缩放，外面再套一圈扩散的星芒光晕。
-     缓动沿用站内 cardIn 的 cubic-bezier，不引入任何新依赖。
-     光晕走 ::before（::after 已被「去掉下划线」那条占用），inset:-9px 让它
-     略微溢出胶囊边缘，看着像是从星芒本身透出来的光。 */
-  @keyframes aiUnlockIn {
-    0%   { opacity: 0; transform: translateY(10px) scale(0.94); }
-    60%  { opacity: 1; transform: translateY(-2px) scale(1.03); }
-    100% { opacity: 1; transform: translateY(0) scale(1); }
-  }
-  @keyframes aiUnlockHalo {
-    0%   { opacity: 0;   transform: scale(0.7); }
-    45%  { opacity: 0.5; transform: scale(1.12); }
-    100% { opacity: 0;   transform: scale(1.45); }
-  }
-  .nav-links a.nav-ai::before {
-    content: "";
-    position: absolute; inset: -9px;
-    border-radius: 999px;
-    background: radial-gradient(circle, rgba(56, 189, 248, 0.45), rgba(129, 140, 248, 0) 70%);
-    opacity: 0; pointer-events: none;
-  }
-  .nav-links a.nav-ai.unlocking { animation: aiUnlockIn 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) both; }
-  .nav-links a.nav-ai.unlocking::before { animation: aiUnlockHalo 0.6s ease-out both; }
 
   .nav-gh {
     display: inline-flex; align-items: center; gap: 7px;
@@ -867,9 +811,6 @@
     html.snap { scroll-snap-type: none; }
     html.js .pane .sec-head, html.js .pane .sec-note { transition: none; }
     html.js .pane.in .vid, html.js .feat.reveal { animation: none; }
-    /* 解锁动效同理：降低动效时按钮直接出现，不做淡入上浮和光晕 */
-    .nav-links a.nav-ai.unlocking,
-    .nav-links a.nav-ai.unlocking::before { animation: none; }
     /* 项目卡平时靠 .pending 先藏起来（opacity:0），降低动效时不做隐藏，保证一定看得见 */
     html.js .feat.pending { opacity: 1; }
     .scroll-hint svg { animation: none; }
@@ -940,10 +881,7 @@
     /* inset 是相对「padding box」算的，1px 边框两边各吃掉 1px，
        所以 -9px 实测只有 41（24+18），要 -10px 才够 44（24+20）。 */
     .vqr-btn::after { content: ""; position: absolute; inset: -11px; }
-    /* AI眼中的我：本身已是胶囊（padding 8/14 + 13px 行盒 ≈ 35 高），
-       触屏下把纵向 padding 提到 13 顶到 44，横向保持 14 不挤。 */
-    .nav-links a.nav-ai { padding: 13px 14px; }
-    /* 星芒按钮同理：桌面 35 → 触屏 44，手指点得到。 */
+    /* 星芒按钮：桌面 35 → 触屏 44，手指点得到。 */
     .nav-links a.nav-spark { width: 44px; height: 44px; }
   }
 
@@ -1021,13 +959,11 @@
     <!-- 板块跳转工具条放在左上角；社交入口集中在首屏主按钮区（见 .cta-row），
          主题切换独立放在右上角。 -->
     <div class="nav-links">
-      <!-- 导航最左两枚都指向 AI 子页，但形态不同：
-           星芒按钮 = 上锁形态，只留一枚十字星芒，点进去是 ai-profile/gate.html 的问答页；
-           「AI眼中的我」= 解锁后才出现（默认 display:none，见 .nav-ai），
-           点进去才是 ai-profile/ 本体。
+      <!-- AI 入口只有这一枚：纯图标星芒，点进去是 ai-profile/gate.html 的问答页。
+           解锁后也**不**在这里额外长出一个带文字的胶囊 —— 入口形态始终唯一，
+           导航宽度恒定，不会因为解锁与否而变宽。
            右侧三个是页内锚点（视频/摄影/项目），靠位置先做区分，再靠胶囊边框二次区分。 -->
-      <a class="nav-spark" href="ai-profile/gate.html" aria-label="解锁「AI眼中的我」" title="解锁「AI眼中的我」"><i class="spark" aria-hidden="true"></i></a>
-      <a class="nav-ai" href="ai-profile/" aria-label="打开 AI 眼中的我"><i class="spark" aria-hidden="true"></i>AI眼中的我</a>
+      <a class="nav-spark" href="ai-profile/gate.html" aria-label="打开「AI眼中的我」" title="打开「AI眼中的我」"><i class="spark" aria-hidden="true"></i></a>
       <a href="#videos">视频</a>
       <a href="#photos">摄影</a>
       <a href="#projects">项目</a>
@@ -2080,44 +2016,6 @@
       cards.forEach(function (c) { io.observe(c); });
     })();
 
-    /* ---------- 「AI眼中的我」解锁 ----------
-       入口默认不在导航上（CSS 里 display:none）。要走完 ai-profile/gate.html
-       那道问答题，答对了才由那边写 localStorage，之后主页就把入口放出来。
-
-       两个标记要分清：
-       - localStorage 是长期状态：解锁过就一直解锁，之后每次进主页按钮本来就在，
-         不该再抖一次动画；
-       - URL 上的 ?ai=1 表示「就是刚才答完题的那一次」，只有它才播解锁动效，
-         播完立刻用 replaceState 把参数抹掉，刷新时不会重播。
-         注：gate 页现在是答对后就地把按钮展示出来、不再跳回主页，所以正常流程
-         不会带这个参数；留着是给手工拼的链接 / 旧书签兜底，不是死代码。 */
-    (function () {
-      var KEY = "aiProfileUnlocked";
-      var ai = document.querySelector(".nav-ai");
-      if (!ai) return;
-
-      var unlocked = false;
-      try { unlocked = localStorage.getItem(KEY) === "1"; } catch (e) { /* 隐私模式下读不到就当没解锁 */ }
-      if (!unlocked) return;
-
-      ai.classList.add("is-unlocked");
-
-      var justUnlocked = /[?&]ai=1(?:&|$)/.test(location.search);
-      var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      if (!justUnlocked || reduce) return;
-
-      // 抹掉参数要在播动画之前做：否则用户一刷新，动画跟着重来一遍。
-      if (history.replaceState) {
-        history.replaceState(null, "", location.pathname + location.hash);
-      }
-      ai.classList.add("unlocking");
-      ai.addEventListener("animationend", function (e) {
-        // 光晕（::before）也会触发 animationend，只认胶囊本体那一条
-        if (e.target === ai && e.animationName === "aiUnlockIn") {
-          ai.classList.remove("unlocking");
-        }
-      });
-    })();
   </script>
 </body>
 </html>

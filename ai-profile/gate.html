@@ -120,14 +120,15 @@
     margin-bottom: 4px;
   }
   .q .mark { font-family: var(--mono); font-size: 13px; font-weight: 700; }
-  /* 题目里这三个数字直接上机体色 —— 文字说「00 是琥珀黄」，数字本身就得是琥珀黄，
-     否则描述和视觉对不上。浅色底上原色偏淡（#F5B301 只有 2:1），压深一档保证可读。 */
-  .q .mark.m0 { color: #F5B301; }
-  .q .mark.m1 { color: #9C6ADE; }
-  .q .mark.m2 { color: #E53935; }
-  html[data-theme="light"] .q .mark.m0 { color: #A86F00; }
-  html[data-theme="light"] .q .mark.m1 { color: #7A4BC8; }
-  html[data-theme="light"] .q .mark.m2 { color: #C62828; }
+  /* 机体色：题目里的编号与解锁列表里的编号共用同一组取值。
+     文字说「00 是琥珀黄」，数字本身就得是琥珀黄，否则描述和视觉对不上。
+     浅色底上原色偏淡（#F5B301 只有 2:1），压深一档保证可读。 */
+  .m0 { color: #F5B301; }
+  .m1 { color: #9C6ADE; }
+  .m2 { color: #E53935; }
+  html[data-theme="light"] .m0 { color: #A86F00; }
+  html[data-theme="light"] .m1 { color: #7A4BC8; }
+  html[data-theme="light"] .m2 { color: #C62828; }
   .hint {
     color: var(--faint);
     font-size: 12.5px;
@@ -219,7 +220,20 @@
 
   .unlock { display: none; }
   .unlock.on { display: block; }
-  .unlock-lead { color: var(--muted); font-size: 13.5px; margin-bottom: 16px; }
+  /* text-wrap: pretty 让浏览器在折行时避开「末行只剩一个字」的孤字
+     （桌面 480px 卡宽下实测会出现「…它身」/「上。」这种断法）。
+     旧浏览器不认识就忽略，退化成普通断行，不影响可读。 */
+  .unlock-lead { color: var(--muted); font-size: 13.5px; margin-bottom: 14px; text-wrap: pretty; }
+
+  /* 三台机体：编号上机体色，后面跟机体名 + 驾驶员 + 一句简介。
+     原来是「答对了 —— 那三个数字，确实来自那部作品。」，只有结论没有内容；
+     现在把 00/01/02 逐一对应到机体与人，三个数字才有实体可指。 */
+  .evas { list-style: none; margin: 0 0 20px; display: grid; gap: 11px; }
+  .evas li { display: grid; grid-template-columns: 30px 1fr; gap: 10px; align-items: baseline; }
+  .evas-n { font-family: var(--mono); font-size: 14px; font-weight: 700; letter-spacing: 0.5px; }
+  .evas-t { font-size: 13.5px; font-weight: 600; line-height: 1.5; }
+  .evas-t em { font-style: normal; font-weight: 400; font-size: 12px; color: var(--muted); margin-left: 7px; }
+  .evas-d { font-size: 12.5px; color: var(--muted); line-height: 1.6; margin-top: 1px; text-wrap: pretty; }
 
   .unlock-btn {
     position: relative;
@@ -300,7 +314,30 @@
 
     <!-- 解锁区：默认 display:none，答对后就地展示，不再跳转 -->
     <div class="unlock" id="unlock">
-      <p class="unlock-lead">答对了 —— 那三个数字，确实来自那部作品。</p>
+      <p class="unlock-lead">答对了 —— 是《新世纪福音战士》。首页那三个数字，就是三台 EVA 的编号：</p>
+      <ul class="evas">
+        <li>
+          <span class="evas-n m0">00</span>
+          <div>
+            <p class="evas-t">零号机<em>绫波丽 · 第一适格者</em></p>
+            <p class="evas-d">最早成型的原型机，琥珀黄涂装；动作里总带着一点生涩。</p>
+          </div>
+        </li>
+        <li>
+          <span class="evas-n m1">01</span>
+          <div>
+            <p class="evas-t">初号机<em>碇真嗣 · 第三适格者</em></p>
+            <p class="evas-d">紫罗兰色试验机，唯一由 Lilith 复制；暴走几乎都发生在它身上。</p>
+          </div>
+        </li>
+        <li>
+          <span class="evas-n m2">02</span>
+          <div>
+            <p class="evas-t">二号机<em>明日香 · 第二适格者</em></p>
+            <p class="evas-d">绯红色先行量产型，实战主力；明日香只肯承认它是自己的机体。</p>
+          </div>
+        </li>
+      </ul>
       <a class="unlock-btn" id="unlockBtn" href="index.html"><i class="spark" aria-hidden="true"></i>AI眼中的我</a>
     </div>
 
@@ -309,7 +346,13 @@
 
 <script>
   (function () {
-    var KEY = "aiProfileUnlocked";
+    /* 解锁状态一律不落盘：不写 localStorage / sessionStorage，甚至连内存标记都不留。
+       所以关掉页面再进来、或在本页刷新，都要重新答题 —— 这是有意的，
+       解锁只在「当前这一次浏览」里有效。
+       早先版本写过 localStorage["aiProfileUnlocked"]，这里顺手清掉，
+       免得旧浏览器上还留着那个键（主页已经不读它了，清掉纯粹是收尾）。 */
+    try { localStorage.removeItem("aiProfileUnlocked"); } catch (e) {}
+
     var gate = document.getElementById("gate");
     var form = document.getElementById("gateForm");
     var input = document.getElementById("answer");
@@ -363,15 +406,6 @@
       }, reduce ? 0 : 280);   // 等题目淡完再换行，否则卡片高度会突变
     }
 
-    // 已经解锁过：不再出题，直接把入口摆出来（也不必再播一次动效）
-    var already = false;
-    try { already = localStorage.getItem(KEY) === "1"; } catch (e) {}
-    if (already) {
-      title.textContent = "「AI 眼中的我」已解锁";
-      gate.classList.add("hiding", "done");
-      unlock.classList.add("on");
-      return;
-    }
 
     function shake() {
       gate.classList.remove("shake");
@@ -411,7 +445,6 @@
       btn.disabled = true;
       btn.textContent = "验证通过";
       gate.classList.add("passed");
-      try { localStorage.setItem(KEY, "1"); } catch (err) { /* 隐私模式写不进也不影响本次解锁 */ }
 
       // 420ms ≈ 星芒闪到七成时开始换，两段动作叠着走比排队等更顺
       setTimeout(function () {
