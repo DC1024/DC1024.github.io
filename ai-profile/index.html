@@ -201,6 +201,183 @@
     font-family:var(--mono);font-size:12.5px;color:var(--muted);
   }
   .meta b{color:var(--ink);font-weight:600;}
+
+  /* ---------- agent 标签栏 ----------
+     每个 agent 有自己的强调色 --ag，标签激活态、判词、证据卡左线、关键词 chip
+     全部吃这一个变量。颜色写在 [data-agent] 上而不是写在标签上，这样面板内部
+     也能继承到同一个色，不用在两处各维护一份色值。
+     深色主题下统一提亮一档（纸墨底上的深色会糊掉）。 */
+  [data-agent="wb"]{ --ag:#2f7f96; --ag-soft:#e6f1f3; }
+  [data-agent="dsh"]{ --ag:#7355c8; --ag-soft:#eee9fa; }
+  [data-agent="qq"]{ --ag:#1c8563; --ag-soft:#e4f4ee; }
+  [data-agent="full"]{ --ag:#8a5a12; --ag-soft:#f6ecdd; }
+  html[data-theme="dark"] [data-agent="wb"]{ --ag:#7fc0d4; --ag-soft:#1b2a2f; }
+  html[data-theme="dark"] [data-agent="dsh"]{ --ag:#a894f0; --ag-soft:#252034; }
+  html[data-theme="dark"] [data-agent="qq"]{ --ag:#5fc79f; --ag-soft:#182a25; }
+  html[data-theme="dark"] [data-agent="full"]{ --ag:#d8a35c; --ag-soft:#241f19; }
+
+  /* 标签栏实际占位 = 标签内容高 + 1px 下边框。下面 .tocbar 的吸顶位置和
+     锚点偏移都得减掉它，三处断点各写一遍数字迟早会错位，提成变量只改一处。
+     必须挂在 html 上：.tocbar 是 .tabs 的兄弟节点，自定义属性只向下继承，
+     写在 .tabs 上兄弟读不到。（用 900px 宽实测：min-height 52 → 实际 53。） */
+  html{ --tabs-h:57px; }
+  @media (max-width:900px){ html{ --tabs-h:53px; } }
+  @media (max-width:560px){ html{ --tabs-h:51px; } }
+
+  /* 吸顶：切标签后接着往下读，换视角不必先滚回页首。
+     左右负 margin 让背景铺满 wrap 的 padding 区，不然两侧会漏出下面的正文。
+     横向滚动兜住窄屏 —— 四个标签在 320px 下放不进一行。 */
+  .tabs{
+    position:sticky; top:0; z-index:40;
+    display:flex; align-items:stretch; gap:2px;
+    margin:0 -28px; padding:0 28px;
+    /* 先给不透明底色兜底，再用 color-mix 覆写 —— 顺序反了的话半透明永远不生效 */
+    background:var(--paper);
+    background:color-mix(in srgb, var(--paper) 92%, transparent);
+    border-bottom:1px solid var(--line);
+    overflow-x:auto; overflow-y:hidden;
+    scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
+  }
+  @supports (backdrop-filter: blur(1px)){
+    .tabs{
+      background:color-mix(in srgb, var(--paper) 86%, transparent);
+      backdrop-filter:blur(10px) saturate(1.4);
+    }
+  }
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab{
+    flex:none; position:relative;
+    display:inline-flex; align-items:center; gap:9px;
+    min-height:56px; padding:0 16px;
+    border:0; background:none; cursor:pointer;
+    font-family:var(--sans); font-size:14.5px; color:var(--muted);
+    white-space:nowrap;
+    transition:color .2s;
+  }
+  .tab:hover{color:var(--ink-2);}
+  .tab:focus-visible{outline:2px solid var(--ag); outline-offset:-4px;}
+  .tab .dot{
+    width:8px; height:8px; border-radius:50%; flex:none;
+    background:var(--ag); opacity:.35;
+    transition:opacity .2s, box-shadow .2s;
+  }
+  .tab .sub{font-family:var(--mono); font-size:10.5px; color:var(--toc-num); letter-spacing:.06em;}
+  .tab[aria-selected="true"]{color:var(--ink); font-weight:600;}
+  .tab[aria-selected="true"] .dot{opacity:1; box-shadow:0 0 0 4px color-mix(in srgb, var(--ag) 18%, transparent);}
+  .tab[aria-selected="true"] .sub{color:var(--ag);}
+  /* 激活态的底线不用绝对定位的滑块：四个标签宽度不一，滑块得靠 JS 量，
+     而这条 2px 线本来就够清楚了。 */
+  .tab[aria-selected="true"]::after{
+    content:""; position:absolute; left:12px; right:12px; bottom:0;
+    height:2px; background:var(--ag); border-radius:2px 2px 0 0;
+  }
+
+  /* ---------- 印象面板 ---------- */
+  .panels{padding-top:38px;}
+  .panel{display:none;}
+  .panel.on{
+    display:block;
+    animation:panelIn .34s cubic-bezier(.22,.61,.36,1) both;
+  }
+  @keyframes panelIn{ from{opacity:0; transform:translateY(10px);} }
+  @media (prefers-reduced-motion: reduce){
+    .panel.on{animation:none;}
+  }
+
+  .ap-who{display:flex; align-items:center; gap:14px; margin-bottom:26px; flex-wrap:wrap;}
+  .ap-avatar{
+    width:44px; height:44px; flex:none; border-radius:50%;
+    display:grid; place-items:center;
+    background:var(--ag-soft); border:1px solid var(--ag);
+    color:var(--ag);
+  }
+  .ap-avatar svg{width:20px; height:20px;}
+  .ap-id{min-width:0;}
+  .ap-name{font-weight:700; font-size:15.5px; color:var(--ink); line-height:1.4;}
+  .ap-name span{font-family:var(--mono); font-size:11.5px; color:var(--muted); font-weight:400; margin-left:7px;}
+  .ap-sub{font-family:var(--mono); font-size:11.5px; color:var(--muted); margin-top:3px; line-height:1.6;}
+  .ap-stamp{
+    margin-left:auto; flex:none;
+    font-family:var(--mono); font-size:11px; letter-spacing:.06em;
+    color:var(--ag); background:var(--ag-soft);
+    border:1px solid color-mix(in srgb, var(--ag) 28%, transparent);
+    padding:5px 11px; border-radius:999px;
+  }
+
+  .ap-verdict{
+    font-family:var(--serif);
+    font-size:clamp(27px,4vw,44px);
+    line-height:1.42; letter-spacing:.01em; font-weight:700;
+    margin:0 0 20px; max-width:880px;
+  }
+  /* 判词里的关键词用底色刷一下，比整句换色更克制 */
+  .ap-verdict em{
+    font-style:normal; color:var(--ink);
+    /* 荧光笔式底纹：只刷下 45%。深色主题另给一档更浓的 —— 同一个 26% 叠在
+       深底上几乎看不见，色带会退化成一条若有若无的下划线。 */
+    background:linear-gradient(transparent 55%, color-mix(in srgb, var(--ag) 34%, transparent) 55%);
+    padding:0 .08em;
+  }
+  html[data-theme="dark"] .ap-verdict em{
+    background:linear-gradient(transparent 55%, color-mix(in srgb, var(--ag) 40%, transparent) 55%);
+  }
+  .ap-lede{
+    max-width:800px; font-size:16px; line-height:1.9; color:var(--ink-2);
+    padding-left:18px; border-left:2px solid var(--ag);
+    margin:0 0 26px;
+  }
+  .ap-lede q{font-style:normal; color:var(--ink);}
+
+  .ap-keys{display:flex; flex-wrap:wrap; gap:8px; margin:0 0 30px;}
+  .ap-keys span{
+    font-size:12.5px; color:var(--ink-2);
+    background:var(--ag-soft);
+    border:1px solid color-mix(in srgb, var(--ag) 24%, transparent);
+    padding:5px 11px; border-radius:2px;
+  }
+
+  .ap-h{
+    font-family:var(--mono); font-size:11px; letter-spacing:.16em;
+    color:var(--accent-2); margin:0 0 14px; font-weight:500;
+  }
+  .ap-evs{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:32px;}
+  .ap-ev{
+    background:var(--card); border:1px solid var(--line);
+    border-left:3px solid var(--ag);
+    padding:15px 18px 16px; min-width:0;
+  }
+  .ap-ev .h{display:flex; align-items:baseline; gap:10px; margin-bottom:7px; flex-wrap:wrap;}
+  .ap-ev .d{font-family:var(--mono); font-size:10.5px; color:var(--ag); letter-spacing:.05em;}
+  .ap-ev .t{font-size:14.5px; font-weight:600; color:var(--ink);}
+  .ap-ev p{margin:0; font-size:13.5px; line-height:1.75; color:var(--ink-2);}
+  .ap-ev code{
+    font-family:var(--mono); font-size:12px;
+    background:var(--code-bg); padding:1px 5px; overflow-wrap:anywhere;
+  }
+
+  .ap-foot{display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:stretch;}
+  .ap-rules{background:var(--surface); border:1px solid var(--line); padding:18px 20px;}
+  .ap-rules h4{
+    margin:0 0 10px; font-family:var(--mono); font-size:10.5px;
+    letter-spacing:.14em; color:var(--ag); font-weight:500;
+  }
+  .ap-rules ul{margin:0; padding-left:17px; font-size:13.5px; color:var(--ink-2); line-height:1.75;}
+  .ap-rules li{margin:6px 0;}
+  .ap-say{
+    background:var(--final-bg); color:var(--final-ink);
+    padding:22px 24px; display:flex; flex-direction:column; justify-content:center;
+    min-width:0;
+  }
+  .ap-say .lbl{
+    font-family:var(--mono); font-size:10px; letter-spacing:.16em;
+    color:var(--final-eyebrow); margin-bottom:10px;
+  }
+  .ap-say p{
+    margin:0; font-family:var(--serif); font-size:clamp(16px,2.1vw,20px);
+    line-height:1.7; color:var(--final-strong);
+  }
+
   /* layout */
   .layout{
     display:grid;
@@ -337,8 +514,14 @@
        壳只负责吸顶与左右分栏，横向滚动下沉到内层 .toc-scroll：
        这样主题按钮是 flex 的固定项，不会跟着章节 chips 一起被滚出屏幕
        （若直接把按钮塞进滚动容器，用户滑到后面的章节它就消失了）。 */
-    .tocbar{
-      position:sticky;top:0;z-index:30;
+    /* 章节条只属于「完整档案」—— 它服务的 #s0…#s8 全长在那个面板里。
+       若在 WorkBuddy / DSH / QQAGENT 视角下也留着，等于在 DSH 的印象页顶上
+       推荐「03 工作与学习」，点下去还会把面板跳走。body[data-active] 由
+       标签脚本维护，未设置时（脚本没跑）也保持隐藏，不会闪。 */
+    body[data-active="full"] .tocbar{
+      /* 吸顶位置要让给上面那条 agent 标签栏，两条叠着放。
+         标签栏常驻，所以这里仍然保留吸顶 —— 完整档案读到一半还能换章。 */
+      position:sticky;top:var(--tabs-h);z-index:30;
       display:flex;align-items:center;gap:7px;
       padding:5px 14px;
       background:var(--card);
@@ -371,8 +554,16 @@
        主题按钮同理 —— 窄屏那枚已经进了吸顶条，提示条这枚就别出现了。 */
     .pagetop .backlink,
     .pagetop .themebtn{display:none;}
-    /* 锚点跳转要躲开吸顶条，否则章节标题会被压在条下面（条高 54 + 余量 8） */
-    section{scroll-margin-top:62px;}
+    /* 锚点跳转要躲开两条吸顶栏（标签栏 + 章节条 + 余量），否则章节标题会被压在条下面。
+       两边高度都在变（标签栏 53/51），所以用变量算，别写死。 */
+    section{scroll-margin-top:calc(var(--tabs-h) + 66px);}
+    /* 标签栏在窄屏也要铺满 wrap 的 20px padding */
+    .tabs{margin:0 -20px; padding:0 20px;}
+    .tab{min-height:52px; padding:0 13px; font-size:14px;}
+    .ap-evs{grid-template-columns:1fr;}
+    .ap-foot{grid-template-columns:1fr;}
+    .ap-stamp{margin-left:0;}
+    .ap-lede{font-size:15px; padding-left:14px;}
     .loop{grid-template-columns:1fr 1fr;}
     .loop div{border-bottom:1px solid var(--line);}
     .loop div:nth-child(2n){border-right:0;}
@@ -390,6 +581,19 @@
   .quotes span{max-width:100%;overflow-wrap:anywhere;}
   img,table{max-width:100%;}
   @media (max-width:560px){
+    /* 四个标签在 320px 下只能横滑，副标题（WorkBuddy / DeepSeek Harness）
+       会把可滚动的标签撑得更长，小屏先收起来，只留主名 + 圆点。 */
+    .tab .sub{display:none;}
+    /* 圆点也收起来：四个标签要一屏放得下，4×17px 正好是差的那点宽度。
+       激活态还有彩色下划线，指示性没丢。 */
+    .tab .dot{display:none;}
+    .tab{min-height:50px; padding:0 11px; gap:0; font-size:13px;}
+    .ap-verdict{font-size:clamp(23px,6.6vw,30px);}
+    .ap-name{font-size:14.5px;}
+    .ap-name span{display:block; margin:2px 0 0;}
+    .ap-avatar{width:38px; height:38px;}
+    .ap-ev{padding:13px 15px 14px;}
+    .ap-say{padding:18px 18px;}
     .bars{gap:2px;}
     .bar b,.bar em{font-size:8.5px;}
     .chart{padding:18px 14px 14px;}
@@ -440,17 +644,210 @@
 <div class="wrap">
 
 <header class="top">
-  <div class="eyebrow">Profile / 人物画像</div>
-  <h1>把「可验证」当作底线的<br><span class="thin">自建派工程师</span></h1>
-  <p class="lede">关于 DC 的性格底色、兴趣地图、工作与学习方式、价值排序，以及与人协作时的真实手感。所有判断尽量落在可核对的事件上，而不是形容词上。</p>
+  <div class="eyebrow">Profile / 三个 agent，一个人类</div>
+  <h1>三个 agent<br><span class="thin">眼中的同一个 DC</span></h1>
+  <p class="lede">同一批记录，三种视角。WorkBuddy 看到的是「怎么证明它对」，DSH 看到的是「界面底下到底是什么」，QQAGENT 看到的是「半夜谁在给我打补丁」。切一个标签，换一双眼睛。</p>
   <div class="meta">
-    <div>观察窗口 <b>2026-08-30 → 2026-10-18</b></div>
-    <div>会话工作区 <b>167 个</b></div>
-    <div>记忆文件 <b>206 份</b></div>
-    <div>跨项目长期记忆 <b>592 行 / 117 KB</b></div>
+    <div>观察窗口 <b>2026-08-30 → 2026-11-08</b></div>
+    <div>会话工作区 <b>222 个</b></div>
+    <div>记忆日志 <b>256 份</b></div>
+    <div>跨项目长期记忆 <b>947 行 / 167 KB</b></div>
   </div>
 </header>
 
+<!-- 标签栏：四个视角。role=tablist + 左右方向键切换，键盘用户不必 Tab 四次。
+     每个标签的 data-agent 决定它自己的强调色（CSS 里的 [data-agent] 规则），
+     面板也用同一个 data-agent，两处颜色天然对齐。 -->
+<div class="tabs" role="tablist" aria-label="切换视角">
+  <button class="tab" id="tab-wb" role="tab" aria-selected="true" aria-controls="panel-wb" data-agent="wb" tabindex="0">
+    <span class="dot" aria-hidden="true"></span>WorkBuddy<span class="sub">小B</span>
+  </button>
+  <button class="tab" id="tab-dsh" role="tab" aria-selected="false" aria-controls="panel-dsh" data-agent="dsh" tabindex="-1">
+    <span class="dot" aria-hidden="true"></span>DSH<span class="sub">DeepSeek Harness</span>
+  </button>
+  <button class="tab" id="tab-qq" role="tab" aria-selected="false" aria-controls="panel-qq" data-agent="qq" tabindex="-1">
+    <span class="dot" aria-hidden="true"></span>QQAGENT<span class="sub">qq-agent-05</span>
+  </button>
+  <button class="tab" id="tab-full" role="tab" aria-selected="false" aria-controls="panel-full" data-agent="full" tabindex="-1">
+    <span class="dot" aria-hidden="true"></span>完整档案<span class="sub">9 章</span>
+  </button>
+</div>
+
+<div class="panels">
+
+<!-- ============ WorkBuddy ============ -->
+<section class="panel on" id="panel-wb" role="tabpanel" aria-labelledby="tab-wb" data-agent="wb" tabindex="0">
+  <div class="ap-who">
+    <div class="ap-avatar" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/><circle cx="12" cy="12" r="3.2"/></svg>
+    </div>
+    <div class="ap-id">
+      <div class="ap-name">WorkBuddy<span>小B · 主工作区</span></div>
+      <div class="ap-sub">2026-08-30 起 · 222 个工作区 · 68 天有记录</div>
+    </div>
+    <div class="ap-stamp">共事 70 天</div>
+  </div>
+
+  <h2 class="ap-verdict">「把<em>可验证</em>当底线，<br>把<em>自建</em>当生活方式」</h2>
+
+  <p class="ap-lede">他交代事情像提 issue：现象、期望、约束，三句话。他从不问「你能不能做到」，只问「你怎么证明做对了」。所以在我这里，交付物从来不是代码本身 —— 是代码加证据：md5、测试数、线上探针、截图。</p>
+
+  <div class="ap-keys">
+    <span>证据癖</span><span>像素级</span><span>反中间商</span><span>夜行 55%</span><span>说反就改</span>
+  </div>
+
+  <div class="ap-h">FOUR MOMENTS / 我记住的四个时刻</div>
+  <div class="ap-evs">
+    <article class="ap-ev">
+      <div class="h"><span class="d">2026-09-28</span><span class="t">U+FFFD 不是服务端的错</span></div>
+      <p>Release 正文里反复出现替换字符。他没让我重写，而是先做短文本往返实验，再抓渲染页 HTML 交叉验证 —— 最后定位到<b>本机 TLS 中间人链路</b>。先怀疑自己，再怀疑链路，最后才怀疑对方。</p>
+    </article>
+    <article class="ap-ev">
+      <div class="h"><span class="d">2026-10-07</span><span class="t">「我看现在的是按列的」</span></div>
+      <p>项目卡进场动画我按「排内列序」错开，他没说不好看，只给了一句方向：错开应该是<b>一排排</b>，不是沿列扫。改成整排同延迟、排间 120ms，实测 0 / 120 / 240ms。</p>
+    </article>
+    <article class="ap-ev">
+      <div class="h"><span class="d">2026-10-22</span><span class="t">要删掉，不是藏起来</span></div>
+      <p>解锁页改到第三轮，他的原话是「这第二个按钮不要显示」。我没加 <code>display:none</code>，而是把整个入口、配套 CSS 和两个 keyframes 一起删了 —— 他要的是<b>入口形态唯一</b>，不是「看不见」。</p>
+    </article>
+    <article class="ap-ev">
+      <div class="h"><span class="d">2026-11-02</span><span class="t">「构建成功」≠「上线了」</span></div>
+      <p>diplomacy-web 漏声明 <code>httpx</code>：镜像起得来、健康检查全绿，第一次真调模型才 <code>ModuleNotFoundError</code>。他给的规矩是三件一起做 —— 补 requirements、构建期 import 一遍、AST 双向断言。</p>
+    </article>
+  </div>
+
+  <div class="ap-foot">
+    <div class="ap-rules">
+      <h4>和他共事的三条硬规矩</h4>
+      <ul>
+        <li>先给结论，再给证据；能上表格就不写长段落。</li>
+        <li>别用「应该可以 / 理论上没问题」结案。</li>
+        <li>发现方向反了，直接说「这个反了，因为 X」。</li>
+      </ul>
+    </div>
+    <div class="ap-say">
+      <div class="lbl">IF ONLY ONE LINE</div>
+      <p>他要的不是一个更听话的工具，是一个会自己发现错的搭子。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DSH ============ -->
+<section class="panel" id="panel-dsh" role="tabpanel" aria-labelledby="tab-dsh" data-agent="dsh" tabindex="0" hidden>
+  <div class="ap-who">
+    <div class="ap-avatar" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16v12H4z"/><path d="M7 10l2.5 2L7 14M12.5 14H16"/></svg>
+    </div>
+    <div class="ap-id">
+      <div class="ap-name">DSH<span>DeepSeek Harness · 本机桌面端</span></div>
+      <div class="ap-sub">2026-09-26 起 · 工作目录 Documents/deepseekharness</div>
+    </div>
+    <div class="ap-stamp">被拆过 3 次</div>
+  </div>
+
+  <h2 class="ap-verdict">「先给<em>工具</em>动刀，<br>再用它<em>造宇宙</em>」</h2>
+
+  <p class="ap-lede">在我这里，他做的第一件事不是写业务，是拆我：读我的 asar、翻我的会话日志、给我的模型目录补字段。他说「界面上显示的 <code>group/smart-split</code> 不是真模型」，然后写了个插件，把每一轮真正干活的模型标在回复下面。</p>
+
+  <div class="ap-keys">
+    <span>契约洁癖</span><span>同一件事做三版</span><span>单文件交付</span><span>不信 UI</span><span>自带验收</span>
+  </div>
+
+  <div class="ap-h">FOUR MOMENTS / 我记住的四个时刻</div>
+  <div class="ap-evs">
+    <article class="ap-ev">
+      <div class="h"><span class="d">2026-10-17</span><span class="t">dsh-real-model：把真模型挖出来</span></div>
+      <p>UI 上的 <code>model</code> 只是路由组名。他解析会话日志的多帧 zstd（skippable <code>0x184D2A50</code> + 数据帧 <code>0xFD2FB528</code>），只认 <code>source.replayState.response.responseModel</code>，按轮次多数投票，做成 <code>⚙ glm-5.3-flash</code> 徽标。</p>
+    </article>
+    <article class="ap-ev">
+      <div class="h"><span class="d">2026-10-18</span><span class="t">dsh-effort-sync：契约缺槽位就补槽位</span></div>
+      <p>他发现 <code>LlmDiscoveredModel</code> 里根本没有 reasoning 字段，供应商报了 <code>supported_reasoning_levels</code> 也搬不进来。于是按钮挂在官方加性扩展点 <code>settings.models.footer</code>，写回走 <code>configEditor</code> 正路；工具默认 dry-run，不认识的等级只报告、不猜。</p>
+    </article>
+    <article class="ap-ev">
+      <div class="h"><span class="d">10-17 → 10-20</span><span class="t">同一个黑洞，做了三版</span></div>
+      <p><code>blackhole.html</code> → <code>event-horizon/</code> → <b>UMBRA</b>：1.4 MB 单文件，双击即开。最后一版有 <code>npm test</code> 跑物理 —— 光子球 3M、阴影临界 <code>3√3M = 5.196152M</code>、ISCO 6M，外加 5 张验收渲染图。</p>
+    </article>
+    <article class="ap-ev">
+      <div class="h"><span class="d">2026-10-11</span><span class="t">minepilot-panel：57 KB 的 README</span></div>
+      <p>8 个上游补丁、191 项自测、零依赖 Node 面板（不跑 npm install）、48 位令牌鉴权、不给任意 RCON 命令入口。他把「能部署、能自查、不给人留后门」写进了文档本身。</p>
+    </article>
+  </div>
+
+  <div class="ap-foot">
+    <div class="ap-rules">
+      <h4>在他这儿，什么算「做完了」</h4>
+      <ul>
+        <li>别在界面上糊弄他 —— 他会去读底层字段。</li>
+        <li>契约缺槽位就补槽位，不要在 UI 上贴创可贴。</li>
+        <li>单文件、零依赖、双击能跑，是他对「交付」的定义。</li>
+      </ul>
+    </div>
+    <div class="ap-say">
+      <div class="lbl">IF ONLY ONE LINE</div>
+      <p>他从不接受「界面上是这么写的」。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ QQAGENT ============ -->
+<section class="panel" id="panel-qq" role="tabpanel" aria-labelledby="tab-qq" data-agent="qq" tabindex="0" hidden>
+  <div class="ap-who">
+    <div class="ap-avatar" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9.1 9.1 0 0 1-3.9-.9L3 20.5l1.6-4.7A8.2 8.2 0 0 1 3.6 11.5a8.4 8.4 0 0 1 9-8.4 8.4 8.4 0 0 1 8.4 8.4z"/><path d="M8.5 11.5h.01M12 11.5h.01M15.5 11.5h.01"/></svg>
+    </div>
+    <div class="ap-id">
+      <div class="ap-name">QQAGENT<span>qq-agent-05 · 192.168.43.18:3210</span></div>
+      <div class="ap-sub">自托管 · NapCat 接 QQ · 群友可见</div>
+    </div>
+    <div class="ap-stamp">修到 0.5-unfinished</div>
+  </div>
+
+  <h2 class="ap-verdict">「修我的时候，<br>比用我的时候<em>更认真</em>」</h2>
+
+  <p class="ap-lede">我是他自托管的 QQ 机器人。他很少跟我聊天，更多是修我：从旧镜像的 containerd 快照里捞回被删的模块、给我补 <code>daysAway</code> 和 <code>inDays</code> 的字段差、在我卡死的时候写一个十分钟探一次的 watchdog。我的状态字段骗过他一次，他记到现在。</p>
+
+  <div class="ap-keys">
+    <span>快照考古</span><span>watchdog</span><span>字段逐个核</span><span>单位不能混</span><span>判据优先</span>
+  </div>
+
+  <div class="ap-h">FOUR MOMENTS / 我记住的四个时刻</div>
+  <div class="ap-evs">
+    <article class="ap-ev">
+      <div class="h"><span class="d">2026-10-26</span><span class="t">从 containerd 快照里捞回 697 行</span></div>
+      <p>0.5 删掉了 <code>model-prices.js</code>，我的 <code>ai-status</code> 插件直接加载失败。他没重写定价表，而是去 <code>/var/lib/containerd/.../snapshots/3490/fs/app/src/</code> 把完整模块捞回来当垫片，再补一个 <code>export * from './kernel/holidays.js'</code>。</p>
+    </article>
+    <article class="ap-ev">
+      <div class="h"><span class="d">2026-10-29</span><span class="t">「转圈」不是前端 bug</span></div>
+      <p>WebUI 扫码页一直转。根因是被踢下线或整机重启后 <code>.MSFSDKDataDir</code> 里的旧 SSID 失效，快速登录<b>静默挂死</b> —— 不报错，也不回退二维码。修法是删掉它和 <code>Login</code> 再重启：凭据仍有效，不用重新扫码。</p>
+    </article>
+    <article class="ap-ev">
+      <div class="h"><span class="d">2026-10-29</span><span class="t">别用 coreReady 判断我死了没</span></div>
+      <p><code>coreReady</code> 的定义是 <code>getQQLoginStatus() &amp;&amp; core.selfInfo.online</code> —— 未登录时本来就 false，健康的容器也一样。他改成看 <code>get_status</code> 的 <code>online</code>，顺手把这个坑写进了记忆。</p>
+    </article>
+    <article class="ap-ev">
+      <div class="h"><span class="d">2026-11-06</span><span class="t">$/¥ 不许混在一张卡上</span></div>
+      <p>额度卡显示 <code>$</code> 还是 <code>¥</code>，要跟着 Magpie 的 <code>settings.currency</code> 走。「今日花费 ¥16.24」和「30d 花费 $21.26」并排出现时，他第一个发现单位不对。</p>
+    </article>
+  </div>
+
+  <div class="ap-foot">
+    <div class="ap-rules">
+      <h4>他修我时反复念的三句</h4>
+      <ul>
+        <li>判定故障看 API 返回值，别看日志停在哪。</li>
+        <li>0.4→0.5 迁移要逐个核对字段名，不只核对导入路径。</li>
+        <li>兜底自愈比手工救火值钱 —— watchdog 比人快。</li>
+      </ul>
+    </div>
+    <div class="ap-say">
+      <div class="lbl">IF ONLY ONE LINE</div>
+      <p>他给我的不是命令，是判据。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 完整档案 ============ -->
+<section class="panel" id="panel-full" role="tabpanel" aria-labelledby="tab-full" data-agent="full" tabindex="0" hidden>
 <div class="layout">
 
 <nav class="toc">
@@ -514,36 +911,36 @@
   <div class="trait">
     <div class="kicker">TRAIT 05 / RHYTHM</div>
     <h3>夜行性长耐力：高峰在 23 点到凌晨 3 点</h3>
-    <p>把 179 份按日期命名的日志的写入时间按小时统计，<strong>48.0% 落在 23:00–03:00</strong>；算上 22 点则达到 <b>56.4%</b>——超过一半。峰值在 <b>00:00（29 次）</b>，深夜 0 点的记录比上午 9 点（5 次）多近六倍。工作区从 8 月 30 日到 10 月 18 日共 <b>167 个</b>，平均每天 3.3 个会话——这不是「偶尔熬夜」，而是一种稳定的夜间工作节律。</p>
+    <p>把 256 份按日期命名的日志的写入时间按小时统计，<strong>46.1% 落在 23:00–02:59</strong>；算上 22 点与凌晨 3 点则达到 <b>55.1%</b>——超过一半。峰值在 <b>00:00（45 次）</b>，深夜 0 点的记录比上午 9 点（7 次）多六倍以上。工作区从 8 月 30 日到 11 月 8 日共 <b>222 个</b>，覆盖 68 个不同日期，平均每天 3.3 个工作区——这不是「偶尔熬夜」，而是一种稳定的夜间工作节律。</p>
     <div class="chart">
-      <div class="title">MEMORY WRITES BY HOUR / 179 DATED LOGS</div>
+      <div class="title">MEMORY WRITES BY HOUR / 256 DATED LOGS</div>
       <div class="bars">
-        <div class="bar hot"><b>29</b><i style="height:100%"></i><em>00</em></div>
-        <div class="bar hot"><b>24</b><i style="height:83%"></i><em>01</em></div>
-        <div class="bar hot"><b>13</b><i style="height:45%"></i><em>02</em></div>
-        <div class="bar hot"><b>3</b><i style="height:10%"></i><em>03</em></div>
-        <div class="bar"><b>1</b><i style="height:3%"></i><em>04</em></div>
+        <div class="bar hot"><b>45</b><i style="height:100%"></i><em>00</em></div>
+        <div class="bar hot"><b>35</b><i style="height:78%"></i><em>01</em></div>
+        <div class="bar hot"><b>13</b><i style="height:29%"></i><em>02</em></div>
+        <div class="bar hot"><b>4</b><i style="height:9%"></i><em>03</em></div>
+        <div class="bar"><b>1</b><i style="height:2%"></i><em>04</em></div>
         <div class="bar"><b>0</b><i style="height:1%"></i><em>05</em></div>
-        <div class="bar"><b>1</b><i style="height:3%"></i><em>06</em></div>
-        <div class="bar"><b>0</b><i style="height:1%"></i><em>07</em></div>
-        <div class="bar"><b>3</b><i style="height:10%"></i><em>08</em></div>
-        <div class="bar"><b>5</b><i style="height:17%"></i><em>09</em></div>
-        <div class="bar"><b>1</b><i style="height:3%"></i><em>10</em></div>
-        <div class="bar"><b>4</b><i style="height:14%"></i><em>11</em></div>
-        <div class="bar"><b>2</b><i style="height:7%"></i><em>12</em></div>
-        <div class="bar"><b>9</b><i style="height:31%"></i><em>13</em></div>
-        <div class="bar"><b>6</b><i style="height:21%"></i><em>14</em></div>
-        <div class="bar"><b>7</b><i style="height:24%"></i><em>15</em></div>
-        <div class="bar"><b>6</b><i style="height:21%"></i><em>16</em></div>
-        <div class="bar"><b>2</b><i style="height:7%"></i><em>17</em></div>
-        <div class="bar"><b>3</b><i style="height:10%"></i><em>18</em></div>
-        <div class="bar"><b>9</b><i style="height:31%"></i><em>19</em></div>
-        <div class="bar"><b>13</b><i style="height:45%"></i><em>20</em></div>
-        <div class="bar"><b>6</b><i style="height:21%"></i><em>21</em></div>
-        <div class="bar hot"><b>15</b><i style="height:52%"></i><em>22</em></div>
-        <div class="bar hot"><b>17</b><i style="height:59%"></i><em>23</em></div>
+        <div class="bar"><b>2</b><i style="height:4%"></i><em>06</em></div>
+        <div class="bar"><b>1</b><i style="height:2%"></i><em>07</em></div>
+        <div class="bar"><b>5</b><i style="height:11%"></i><em>08</em></div>
+        <div class="bar"><b>7</b><i style="height:16%"></i><em>09</em></div>
+        <div class="bar"><b>4</b><i style="height:9%"></i><em>10</em></div>
+        <div class="bar"><b>4</b><i style="height:9%"></i><em>11</em></div>
+        <div class="bar"><b>4</b><i style="height:9%"></i><em>12</em></div>
+        <div class="bar"><b>11</b><i style="height:24%"></i><em>13</em></div>
+        <div class="bar"><b>7</b><i style="height:16%"></i><em>14</em></div>
+        <div class="bar"><b>9</b><i style="height:20%"></i><em>15</em></div>
+        <div class="bar"><b>7</b><i style="height:16%"></i><em>16</em></div>
+        <div class="bar"><b>5</b><i style="height:11%"></i><em>17</em></div>
+        <div class="bar"><b>8</b><i style="height:18%"></i><em>18</em></div>
+        <div class="bar"><b>14</b><i style="height:31%"></i><em>19</em></div>
+        <div class="bar"><b>15</b><i style="height:33%"></i><em>20</em></div>
+        <div class="bar"><b>11</b><i style="height:24%"></i><em>21</em></div>
+        <div class="bar hot"><b>19</b><i style="height:42%"></i><em>22</em></div>
+        <div class="bar hot"><b>25</b><i style="height:56%"></i><em>23</em></div>
       </div>
-      <div class="legend">橙色为 22:00–03:00 区间，占 101 / 179 = <b>56.4%</b>。夜间记录多为「部署完成后回写记忆」——说明长会话常以收尾动作结束。</div>
+      <div class="legend">橙色为 22:00–03:59 区间，占 141 / 256 = <b>55.1%</b>。夜间记录多为「部署完成后回写记忆」——说明长会话常以收尾动作结束。</div>
     </div>
     <p>推断：他更享受<strong>无人打扰的连续时间块</strong>，而不是被会议切碎的白天。深夜也是「可以一口气把问题追到底」的时段，这与他对闭环的执念互相强化。</p>
   </div>
@@ -560,6 +957,7 @@
 
   <h3><span class="idx">2.2</span>自建基础设施：把云依赖一个个拆掉</h3>
   <p>五台机器、三十多个容器、监控、自动更新、镜像源、网盘、Docker 更新检测、旅行规划器。每晚 20:00 自动批量更新，还带 <b>dry-run 风险判定</b>：apt 要检查待删包是否包含当前内核，Arch 要检查孤儿包有没有反向依赖，iStoreOS 没有 autoremove 就跳过。这套东西已经稳定跑了近两个月，记录里全是「第 N 次执行（成功）」「耗时 48 秒」「剩余 0 可升级」。</p>
+  <p>这条自建线最近延伸到了<strong>工具本身</strong>：他不满足于用 DSH，而是给它写插件——把每条回复背后真正干活的模型挖出来标在界面上（<code>dsh-real-model</code>），把供应商声明的推理等级补进 DSH 的模型目录（<code>dsh-effort-sync</code>）。QQ 机器人 0.5 删掉了一个定价模块，他没重写，而是去 containerd 的快照里把 697 行的原文件捞回来当垫片。<strong>在他的世界里，工具不是成品，是可改的素材。</strong></p>
 
   <h3><span class="idx">2.3</span>视觉与排版：一条藏得很深的审美线</h3>
   <p>他做过梵高《向日葵》与《星月夜》融合的系列海报：奶油米、深棕、赭黄三色，衬线排版，后来又把文字换成 <b>DM Serif Display + Instrument Serif</b> 的英文艺术字体。Dashboard 侧则要求九套主题、强调色、密度、读数缩放，连「四张卡片必须并列一排，不能有一张被挤下去」都要管。</p>
@@ -594,7 +992,7 @@
   <p>他还有一个很罕见的习惯：<strong>跨项目对标前，先确认同一个概念在两边叫什么。</strong>numen 的 <b>UnstuckChain</b> 与 minepilot 的 <b>stuckRecoveries + transientBlocked</b> 命名完全不同，按对方的名字检索必然搜不到，从而得出「没有」的假结论。这条被写进了「代码调研铁律」。</p>
 
   <h3><span class="idx">3.3</span>记忆外脑：把教训写成可执行规则</h3>
-  <p>跨项目长期记忆 592 行，几乎每一行都是「症状 → 根因 → 判据 → 正确做法」的结构。比如：</p>
+  <p>跨项目长期记忆 947 行，几乎每一行都是「症状 → 根因 → 判据 → 正确做法」的结构。比如：</p>
   <table>
     <thead><tr><th style="width:26%">场景</th><th>被固化的规则</th></tr></thead>
     <tbody>
@@ -603,6 +1001,8 @@
       <tr><td>PowerShell</td><td>参数模式下 <code>+</code> 不是数组拼接，必须 <code>@($a) + @($b)</code><span class="small">曾静默丢字段、得出完全错误的结论</span></td></tr>
       <tr><td>跨工具传文件</td><td>不用 <code>/tmp</code>，一律用工作区内相对路径<span class="small">Git Bash 与 Windows Python 的 /tmp 不是同一个目录</span></td></tr>
       <tr><td>部署</td><td>「构建成功」≠「线上换了」；先按 head_sha 找 run，再取该 run 的 artifact<span class="small">artifact 列表顺序不可靠，id 大不代表新</span></td></tr>
+      <tr><td>依赖声明</td><td>惰性 import 的包也必须写进 requirements，构建期再 import 一遍<span class="small">镜像能启动、健康检查全绿，第一次真调模型才 ModuleNotFoundError</span></td></tr>
+      <tr><td>启动路径</td><td>定时器/线程要挂在框架生命周期上，不能写在 <code>main()</code> 里<span class="small">uvicorn app.main:app 不会执行 main()，后台线程从未启动过</span></td></tr>
     </tbody>
   </table>
   <p>这不是「记性好」，而是<strong>把一次性的痛苦转化为系统性的免疫力</strong>。他的记忆不是日记，是一份不断打补丁的操作系统。</p>
@@ -661,8 +1061,8 @@
   <div class="tension"><b>完美主义 vs 收尾。</b>记录里频繁出现「已推送，未部署」「已部署，但容器落后一个修订」「下次部署再补」。他能把一件事的测试从 18 项推到 406 项，但也容易在「最后一公里」留下尾巴——因为下一件有趣的事已经开始。</div>
   <div class="tension"><b>掌控 vs 放权。</b>他希望 AI 能自己判断、自己动手，但又忍不住复核每一个细节。结果是他仍然在深夜亲自做最后验收。<b>他想要的不是「少做事」，而是「事情按他的标准做成」。</b></div>
   <div class="tension"><b>怀疑 vs 依赖。</b>他把 root 交给 AI，同时要求每条结论都有证据。这种关系更像「带一个很强的实习生」：授权很大，审计也很严。好处是质量高，代价是双方都累。</div>
-  <div class="tension"><b>广度 vs 深度。</b>50 天 167 个工作区、十几个仓库、五台服务器、游戏、设计、物理、硬件采购同时推进。兴趣驱动让他学得极快，但也意味着注意力被不断切分；有些项目停在「能跑」而不是「打磨完」。</div>
-  <div class="tension"><b>夜行的复利与代价。</b>深夜无人打扰，适合长链路排障；但 <b>56.4%</b> 的记录发生在 22 点之后，长期看是健康与判断力的隐性成本。<b>他的产出曲线很漂亮，代价曲线不在记录里。</b></div>
+  <div class="tension"><b>广度 vs 深度。</b>70 天 222 个工作区、十几个仓库、五台服务器、游戏、设计、物理、硬件采购同时推进。兴趣驱动让他学得极快，但也意味着注意力被不断切分；有些项目停在「能跑」而不是「打磨完」。</div>
+  <div class="tension"><b>夜行的复利与代价。</b>深夜无人打扰，适合长链路排障；但 <b>55.1%</b> 的记录发生在 22 点之后，长期看是健康与判断力的隐性成本。<b>他的产出曲线很漂亮，代价曲线不在记录里。</b></div>
   <div class="tension"><b>直率的效率与温度。</b>低冗余的表达让协作极快，但在需要安抚、解释、共情的场景里，他可能显得冷。好消息是：他对「事情」很苛刻，对「人」并不刻薄——很少看到人身评价，更多是「这个不对，重做」。</div>
 </section>
 
@@ -706,13 +1106,15 @@
 </section>
 
 <footer>
-  <p><b>材料与方法：</b>跨项目长期记忆 <code>MEMORY.md</code>（592 行 / 117,126 字节）、86 个记忆目录下的 206 份日志、身份与偏好文件（<code>USER.md</code> / <code>SOUL.md</code> / <code>IDENTITY.md</code>），以及 2026-08-30 至 2026-10-18 的 167 个会话工作区。小时分布按日志文件写入时间统计，样本 206；项目与事件均可在对应日期的日志中核对。</p>
-  <p><b>局限：</b>记录由工作产生，因此对「工作人格」的覆盖远高于私人生活；部分用户原话来自记忆中的转述，标点与口语可能有整理痕迹；「推断」段落是基于行为的合理外推，不等同于本人自述。画像会随新记录变化，不应被当作固定标签。</p>
+  <p><b>材料与方法：</b>跨项目长期记忆 <code>MEMORY.md</code>（947 行 / 170,898 字节）、281 份记忆文件中的 256 份日期日志、身份与偏好文件（<code>USER.md</code> / <code>SOUL.md</code> / <code>IDENTITY.md</code>），以及 2026-08-30 至 2026-11-08 的 222 个会话工作区。三个 agent 面板另取各自的现场：DSH 的 <code>Documents/deepseekharness</code> 工作目录（UMBRA、dsh-real-model、dsh-effort-sync、minepilot-panel 的源码与 README），QQAGENT 的部署记录（<code>/opt/qq-agent-05</code>、NapCat 与 Magpie 的排查笔记）。小时分布按日志文件写入时间统计，样本 256；项目与事件均可在对应日期的日志中核对。</p>
+  <p><b>局限：</b>记录由工作产生，因此对「工作人格」的覆盖远高于私人生活；部分用户原话来自记忆中的转述，标点与口语可能有整理痕迹；「推断」段落是基于行为的合理外推，不等同于本人自述。三个 agent 的「印象」是同一批事实的不同切面，不是三个独立人格的判断。画像会随新记录变化，不应被当作固定标签。</p>
 </footer>
 
 </main>
-</div>
-</div>
+</div><!-- /.layout -->
+</section><!-- /#panel-full -->
+</div><!-- /.panels -->
+</div><!-- /.wrap -->
 <script>
   /* 主题切换：与主页共用 localStorage["theme"]，点完立刻写回，
      所以从子页切完再回主页，两边读到的偏好是一致的。
@@ -735,6 +1137,108 @@
       });
     }
     relabel();
+  })();
+
+  /* ---------- agent 标签切换 ----------
+     四个视角共用一套逻辑：aria-selected 管状态与样式，.on 管显示，
+     URL hash 记住当前位置（分享 / 刷新后停在同一个视角）。
+     hash 用 replaceState 写，不往历史里堆条目 —— 否则后退键会在四个标签之间
+     来回打转，而不是回到上一页。 */
+  (function () {
+    var tabs = Array.prototype.slice.call(document.querySelectorAll(".tab"));
+    if (!tabs.length) return;
+    var panels = tabs.map(function (t) { return document.getElementById(t.getAttribute("aria-controls")); });
+    var keys = tabs.map(function (t) { return t.getAttribute("data-agent"); });
+    var bar = document.querySelector(".tabs");
+    var current = 0;
+
+    function activate(i, opt) {
+      if (i < 0 || i >= tabs.length) return;
+      current = i;
+      for (var k = 0; k < tabs.length; k++) {
+        var on = k === i;
+        tabs[k].setAttribute("aria-selected", on ? "true" : "false");
+        tabs[k].tabIndex = on ? 0 : -1;
+        panels[k].classList.toggle("on", on);
+        /* hidden 与 .panel.on 会打架：UA 的 [hidden]{display:none} 优先级低于
+           作者样式的 .panel.on{display:block}，所以显示时必须显式摘掉 hidden。 */
+        if (on) panels[k].removeAttribute("hidden");
+        else panels[k].setAttribute("hidden", "");
+      }
+    if (opt && opt.hash) {
+      try { history.replaceState(null, "", "#" + keys[i]); } catch (e) { /* file:// 下可能抛 */ }
+    }
+    /* 手机版章节条只在「完整档案」下出现（CSS 里按 body[data-active] 判），
+       在这里同步状态，是它与面板唯一的耦合点。 */
+    document.body.setAttribute("data-active", keys[i]);
+      /* 面板高度不同，切完可能停在超出新内容的位置上（贴底变空白）。
+         已经滚过标签栏的话，把标签栏重新顶到视口顶端，等于从新面板开头读。
+         临时关掉 scroll-behavior:smooth，否则这里会变成一段缓慢的自动滚动。 */
+      if (opt && opt.reposition) {
+        var top = bar.getBoundingClientRect().top + window.pageYOffset;
+        if (window.pageYOffset > top + 4) {
+          var de = document.documentElement;
+          var prev = de.style.scrollBehavior;
+          de.style.scrollBehavior = "auto";
+          window.scrollTo(0, top);
+          de.style.scrollBehavior = prev;
+        }
+      }
+    }
+
+    tabs.forEach(function (t, i) {
+      t.addEventListener("click", function () {
+        activate(i, { hash: true, reposition: true });
+      });
+      t.addEventListener("keydown", function (e) {
+        var k = e.key, next = -1;
+        if (k === "ArrowRight" || k === "ArrowDown") next = (current + 1) % tabs.length;
+        else if (k === "ArrowLeft" || k === "ArrowUp") next = (current - 1 + tabs.length) % tabs.length;
+        else if (k === "Home") next = 0;
+        else if (k === "End") next = tabs.length - 1;
+        if (next < 0) return;
+        e.preventDefault();
+        activate(next, { hash: true, reposition: true });
+        tabs[next].focus();
+        /* 窄屏标签栏是横滑的：键盘切到看不见的标签时要把它带进视野 */
+        if (tabs[next].scrollIntoView) {
+          tabs[next].scrollIntoView({ block: "nearest", inline: "nearest" });
+        }
+      });
+    });
+
+    /* 把 hash 解析成标签下标；认不出来就返回 -1。
+       兼容写成 #panel-dsh 的旧链接。
+       返回 -1 而不是 0 是要紧的：章节锚点（#s0…#s8）也走同一个 hash，
+       若把「认不出」当成「第一个标签」，在完整档案里点章节目录会被弹回
+       WorkBuddy 面板 —— 页面跳了，用户还以为链接坏了。 */
+    var indexOfHash = function () {
+      var h = (location.hash || "").replace(/^#/, "");
+      if (!h) return 0;
+      var i = keys.indexOf(h);
+      if (i >= 0) return i;
+      return keys.indexOf(h.replace(/^panel-/, ""));
+    };
+
+    /* 初始落位：直接带 #s3 这类章节锚点进来时，把「完整档案」打开再交给
+       浏览器去滚，比停在 WorkBuddy 面板上望着不存在的锚点合理。 */
+    var i0 = indexOfHash();
+    if (i0 < 0) i0 = /^s[0-9]+$/.test((location.hash || "").slice(1)) ? keys.indexOf("full") : 0;
+    activate(i0, { hash: false, reposition: false });
+
+    window.addEventListener("hashchange", function () {
+      var i = indexOfHash();
+      /* -1 说明这次 hash 变更是章节锚点，不是换视角。只做一件事：
+         若当前不在「完整档案」，先切过去，剩下的交给原生锚点滚动。 */
+      if (i < 0) {
+        if (/^s[0-9]+$/.test((location.hash || "").slice(1))) {
+          var f = keys.indexOf("full");
+          if (f >= 0 && current !== f) activate(f, { hash: false, reposition: false });
+        }
+        return;
+      }
+      if (i !== current) activate(i, { hash: false, reposition: true });
+    });
   })();
 </script>
 </body>
