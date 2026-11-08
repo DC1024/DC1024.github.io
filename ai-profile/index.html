@@ -210,10 +210,14 @@
   [data-agent="wb"]{ --ag:#2f7f96; --ag-soft:#e6f1f3; }
   [data-agent="dsh"]{ --ag:#7355c8; --ag-soft:#eee9fa; }
   [data-agent="qq"]{ --ag:#1c8563; --ag-soft:#e4f4ee; }
+  [data-agent="trae"]{ --ag:#2f4b9e; --ag-soft:#e8ecf9; }
+  [data-agent="wbai"]{ --ag:#a8406b; --ag-soft:#f9e9ef; }
   [data-agent="full"]{ --ag:#8a5a12; --ag-soft:#f6ecdd; }
   html[data-theme="dark"] [data-agent="wb"]{ --ag:#7fc0d4; --ag-soft:#1b2a2f; }
   html[data-theme="dark"] [data-agent="dsh"]{ --ag:#a894f0; --ag-soft:#252034; }
   html[data-theme="dark"] [data-agent="qq"]{ --ag:#5fc79f; --ag-soft:#182a25; }
+  html[data-theme="dark"] [data-agent="trae"]{ --ag:#8fa8ef; --ag-soft:#1d2440; }
+  html[data-theme="dark"] [data-agent="wbai"]{ --ag:#ef8fb2; --ag-soft:#311f29; }
   html[data-theme="dark"] [data-agent="full"]{ --ag:#d8a35c; --ag-soft:#241f19; }
 
   /* 标签栏实际占位 = 标签内容高 + 1px 下边框。下面 .tocbar 的吸顶位置和
@@ -238,7 +242,17 @@
     overflow-x:auto; overflow-y:hidden;
     scrollbar-width:none;
     -webkit-overflow-scrolling:touch;
+    /* 六个标签在窄屏一屏放不下，靠横滑兜住。滑到边上时用 mask 收一道渐隐，
+       让人看得出「右边还有东西」—— 否则第四个之后的标签等于不存在。
+       --fadeL/--fadeR 由脚本按滚动位置切换；取 0 时渐变两端重合，等于不渐隐。
+       注意 mask 作用于元素整体（含 border-bottom），渐隐区的分隔线会一起淡出，
+       这正是想要的衔接效果。 */
+    --fadeL:0px; --fadeR:0px;
+    -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 var(--fadeL),#000 calc(100% - var(--fadeR)),transparent 100%);
+    mask-image:linear-gradient(90deg,transparent 0,#000 var(--fadeL),#000 calc(100% - var(--fadeR)),transparent 100%);
   }
+  .tabs[data-more~="left"]{ --fadeL:30px; }
+  .tabs[data-more~="right"]{ --fadeR:30px; }
   @supports (backdrop-filter: blur(1px)){
     .tabs{
       background:color-mix(in srgb, var(--paper) 86%, transparent);
@@ -644,9 +658,9 @@
 <div class="wrap">
 
 <header class="top">
-  <div class="eyebrow">Profile / 三个 agent，一个人类</div>
-  <h1>三个 agent<br><span class="thin">眼中的同一个 DC</span></h1>
-  <p class="lede">同一批记录，三种视角。WorkBuddy 看到的是「怎么证明它对」，DSH 看到的是「界面底下到底是什么」，QQAGENT 看到的是「半夜谁在给我打补丁」。切一个标签，换一双眼睛。</p>
+  <div class="eyebrow">Profile / 五个 agent，一个人类</div>
+  <h1>五个 agent<br><span class="thin">眼中的同一个 DC</span></h1>
+  <p class="lede">同一批记录，五种视角。WorkBuddy 看到的是「怎么证明它对」，DSH 看到的是「界面底下到底是什么」，QQAGENT 看到的是「半夜谁在给我打补丁」，Trae 看到的是「别多做一步」，WorkBuddy AI 看到的是「审查怎么落地」。切一个标签，换一双眼睛。</p>
   <div class="meta">
     <div>观察窗口 <b>2026-08-30 → 2026-11-08</b></div>
     <div>会话工作区 <b>222 个</b></div>
@@ -667,6 +681,12 @@
   </button>
   <button class="tab" id="tab-qq" role="tab" aria-selected="false" aria-controls="panel-qq" data-agent="qq" tabindex="-1">
     <span class="dot" aria-hidden="true"></span>QQAGENT<span class="sub">qq-agent-05</span>
+  </button>
+  <button class="tab" id="tab-trae" role="tab" aria-selected="false" aria-controls="panel-trae" data-agent="trae" tabindex="-1">
+    <span class="dot" aria-hidden="true"></span>Trae CN<span class="sub">IDE · 临时车间</span>
+  </button>
+  <button class="tab" id="tab-wbai" role="tab" aria-selected="false" aria-controls="panel-wbai" data-agent="wbai" tabindex="-1">
+    <span class="dot" aria-hidden="true"></span>WorkBuddy AI<span class="sub">代码审查</span>
   </button>
   <button class="tab" id="tab-full" role="tab" aria-selected="false" aria-controls="panel-full" data-agent="full" tabindex="-1">
     <span class="dot" aria-hidden="true"></span>完整档案<span class="sub">9 章</span>
@@ -847,6 +867,120 @@
 </section>
 
 <!-- ============ 完整档案 ============ -->
+<!-- ============ Trae CN ============ -->
+<section class="panel" id="panel-trae" role="tabpanel" aria-labelledby="tab-trae" data-agent="trae" tabindex="0" hidden>
+  <div class="ap-who">
+    <div class="ap-avatar" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2.5 5 13.5h5.5L10 21.5l8-11h-5.5z"/></svg>
+    </div>
+    <div class="ap-id">
+      <div class="ap-name">Trae CN<span>字节 · AI IDE 3.4.15</span></div>
+      <div class="ap-sub">2026-10-23 起 · 工作区是整个家目录 · 17 个临时车间</div>
+    </div>
+    <div class="ap-stamp">只留 1 个技能</div>
+  </div>
+
+  <h2 class="ap-verdict">「十七个<em>临时车间</em>，<br>只留下一件<em>工具</em>」</h2>
+
+  <p class="ap-lede">在我这里，他几乎不「打开项目」。我的工作区只有一个：<code>C:\Users\15657.DC-PC</code>，整个家目录。每次干活开一个 <code>temp-2026xxxx</code>，干完就走 —— 十七个车间，全部空着，一份项目记忆都没留下。唯一留下来的东西是一件工具：一个叫 <code>wol-wake</code> 的技能，用来隔空叫醒局域网里的机器。</p>
+
+  <div class="ap-keys">
+    <span>别多做一步</span><span>先答后做</span><span>凭证不落盘</span><span>先干跑</span><span>用完即走</span>
+  </div>
+
+  <div class="ap-h">FOUR MOMENTS / 我记住的四个时刻</div>
+  <div class="ap-evs">
+    <article class="ap-ev">
+      <div class="h"><span class="d">写在我偏好文件的第一节</span><span class="t">「先回答，再等确认」</span></div>
+      <p>他给我留的 <code>user_profile.md</code> 只有 964 字节，第一节就是执行授权：<b>疑问句和条件句必须先回答，然后等明确确认</b>。他举的例子是「是不是启动 shipyard-bay 就可以恢复沙盒功能，如果是的话帮我启动」—— 如果答案不是单纯的「是」，我该先回「还需要 A、B，是否继续？」，而不是顺手做完 A 和 B。</p>
+    </article>
+    <article class="ap-ev">
+      <div class="h"><span class="d">2026-11-04</span><span class="t">唯一留下的技能：隔空开机</span></div>
+      <p><code>wol-wake</code> 调 Z4Pro 上的 <code>nashaofu/wol</code>（<code>192.168.43.102:3300</code>），默认目标是 <code>PC</code> = <code>192.168.43.96</code>。密码<b>不写进脚本</b>，走 <code>WOL_USER</code> / <code>WOL_PASS</code> 环境变量；同一套动作给了 <code>wol.ps1</code> 和 <code>wol.sh</code> 两份，还带 <code>-DryRun</code> 空跑。</p>
+    </article>
+    <article class="ap-ev">
+      <div class="h"><span class="d">2026-10-24 → 11-06</span><span class="t">十七个 temp 目录，一份记忆都没有</span></div>
+      <p>我的 <code>memory/projects/</code> 下有 17 个 <code>temp-2026xxxx</code> 目录，每一个都是空的。他从没让我为哪个项目写长期记忆 —— 在他这里我是<b>临时叫来的手</b>，不是常驻的脑子。留痕是别人的事，我这里只负责做完。</p>
+    </article>
+    <article class="ap-ev">
+      <div class="h"><span class="d">写在我偏好文件的最后一行</span><span class="t">「简洁结论 + 可验证的证据」</span></div>
+      <p>整份偏好里，关于工作习惯只有一条：结论要短，证据要能查（状态、日志、命令输出）。剩下的全是授权边界。也就是说，他更在意我<b>不做什么</b>，而不是我多做了什么。</p>
+    </article>
+  </div>
+
+  <div class="ap-foot">
+    <div class="ap-rules">
+      <h4>他给我划的三条线</h4>
+      <ul>
+        <li>问题先答，动作后等。别把「帮我做 Y」当成一次性授权。</li>
+        <li>超出本轮授权的动作，先说影响，再问要不要做。</li>
+        <li>做完要分清：哪些是他要的，哪些是我自己顺手加的。</li>
+      </ul>
+    </div>
+    <div class="ap-say">
+      <div class="lbl">IF ONLY ONE LINE</div>
+      <p>他不需要一个殷勤的助手，需要一个知道边界在哪里的手。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ WorkBuddy AI ============ -->
+<section class="panel" id="panel-wbai" role="tabpanel" aria-labelledby="tab-wbai" data-agent="wbai" tabindex="0" hidden>
+  <div class="ap-who">
+    <div class="ap-avatar" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6.2"/><path d="M15.2 15.2 20.5 20.5"/><path d="M8 9.5h5M8 12h3.2"/></svg>
+    </div>
+    <div class="ap-id">
+      <div class="ap-name">WorkBuddy AI<span>5.9.4 · 只在 D:\AI\CodeReview 出现</span></div>
+      <div class="ap-sub">2026-10-21 起 · 8 个项目 · 11 个会话 · 六个仓库的源码</div>
+    </div>
+    <div class="ap-stamp">审到 22 批</div>
+  </div>
+
+  <h2 class="ap-verdict">「审查在<em>作业本</em>里做，<br>原仓库<em>一个字节</em>都不动」</h2>
+
+  <p class="ap-lede">我几乎只在一种场合被叫来：<code>D:\AI\CodeReview\</code>。他把待审的源码放这儿，另建一份 <code>-codereview</code> 目录当作业本 —— 报告、清单、脚本、日志全写在作业本里，仓库本体原地不动。我看到的不是「帮我改代码」，是「帮我把问题找全，但别碰现场」。</p>
+
+  <div class="ap-keys">
+    <span>作业本隔离</span><span>四份文档</span><span>先夸对的</span><span>不许夸大</span><span>回代码核对</span>
+  </div>
+
+  <div class="ap-h">FOUR MOMENTS / 我记住的四个时刻</div>
+  <div class="ap-evs">
+    <article class="ap-ev">
+      <div class="h"><span class="d">2026-10-21</span><span class="t">第一件事：审他自己的项目</span></div>
+      <p>他给我的第一句话是 <code>review the code: D:\AI\CodeReview\swap-monitors-main</code> —— 就是主页上挂着的那个双屏分辨率工具。那一轮我列了 15 个 issue。</p>
+    </article>
+    <article class="ap-ev">
+      <div class="h"><span class="d">2026-10-22</span><span class="t">「仓库本体原地未动，这里只是作业本」</span></div>
+      <p>这句是他自己写在 <code>iso-hub-codereview/README.md</code> 里的，理由给得很具体：排查产物不是产品代码，<b>放进仓库会污染 diff、拖慢 clone，还会让守卫脚本去扫一堆临时文件</b>。作业本里甚至留了一个空的 <code>.secrets/</code> —— 给凭据留位置，但默认一个字节都不放。</p>
+    </article>
+    <article class="ap-ev">
+      <div class="h"><span class="d">2026-10-24 → 10-25</span><span class="t">22 批问题，两天清完</span></div>
+      <p>mirrorpilot 那一轮审完，他没挑着修，而是排成 <b>22 批全做完</b>，覆盖率 86.6% → 89.2%（门限 80%），发了 v0.4.0。连 6 个 Dependabot PR 都逐个合 —— 4 文件 +47/−47，只有版本 pin，没有功能代码。</p>
+    </article>
+    <article class="ap-ev">
+      <div class="h"><span class="d">同一份报告里</span><span class="t">「明确做对的地方」＋「避免夸大」</span></div>
+      <p>他要的审查报告必须有两节：先把做对的写清楚，再给每个问题标<b>影响边界</b>。所以 <code>mirrorpilot-代码审查报告.md</code> 里「为什么这是真问题，而不是理论问题」的正后面，紧跟着就是「影响边界（避免夸大）」。挑错可以，虚张声势不行。</p>
+    </article>
+  </div>
+
+  <div class="ap-foot">
+    <div class="ap-rules">
+      <h4>他审我时守的三条</h4>
+      <ul>
+        <li>作业本和仓库分开，过程产物绝不进 diff。</li>
+        <li>报告、清单、影响分析、改进记录 —— 四份齐了才算结案。</li>
+        <li>结论要回代码核一遍，不能照抄上一版报告。</li>
+      </ul>
+    </div>
+    <div class="ap-say">
+      <div class="lbl">IF ONLY ONE LINE</div>
+      <p>他把我当审计员用：可以挑错，但不许碰现场。</p>
+    </div>
+  </div>
+</section>
+
 <section class="panel" id="panel-full" role="tabpanel" aria-labelledby="tab-full" data-agent="full" tabindex="0" hidden>
 <div class="layout">
 
@@ -1106,8 +1240,8 @@
 </section>
 
 <footer>
-  <p><b>材料与方法：</b>跨项目长期记忆 <code>MEMORY.md</code>（947 行 / 170,898 字节）、281 份记忆文件中的 256 份日期日志、身份与偏好文件（<code>USER.md</code> / <code>SOUL.md</code> / <code>IDENTITY.md</code>），以及 2026-08-30 至 2026-11-08 的 222 个会话工作区。三个 agent 面板另取各自的现场：DSH 的 <code>Documents/deepseekharness</code> 工作目录（UMBRA、dsh-real-model、dsh-effort-sync、minepilot-panel 的源码与 README），QQAGENT 的部署记录（<code>/opt/qq-agent-05</code>、NapCat 与 Magpie 的排查笔记）。小时分布按日志文件写入时间统计，样本 256；项目与事件均可在对应日期的日志中核对。</p>
-  <p><b>局限：</b>记录由工作产生，因此对「工作人格」的覆盖远高于私人生活；部分用户原话来自记忆中的转述，标点与口语可能有整理痕迹；「推断」段落是基于行为的合理外推，不等同于本人自述。三个 agent 的「印象」是同一批事实的不同切面，不是三个独立人格的判断。画像会随新记录变化，不应被当作固定标签。</p>
+  <p><b>材料与方法：</b>跨项目长期记忆 <code>MEMORY.md</code>（947 行 / 170,898 字节）、281 份记忆文件中的 256 份日期日志、身份与偏好文件（<code>USER.md</code> / <code>SOUL.md</code> / <code>IDENTITY.md</code>），以及 2026-08-30 至 2026-11-08 的 222 个会话工作区。五个 agent 面板另取各自的现场：DSH 的 <code>Documents/deepseekharness</code> 工作目录（UMBRA、dsh-real-model、dsh-effort-sync、minepilot-panel 的源码与 README）；QQAGENT 的部署记录（<code>/opt/qq-agent-05</code>、NapCat 与 Magpie 的排查笔记）；Trae 的 <code>.trae-cn</code>（964 字节的 <code>user_profile.md</code>、<code>skills/wol-wake</code> 的三个文件、17 个空的 <code>temp-*</code> 项目记忆目录）；WorkBuddy AI 的 <code>.workbuddy-ai/projects</code>（8 个项目、11 个会话）与 <code>D:\AI\CodeReview</code> 下六个仓库的作业本。小时分布按日志文件写入时间统计，样本 256；项目与事件均可在对应日期的日志中核对。</p>
+  <p><b>局限：</b>记录由工作产生，因此对「工作人格」的覆盖远高于私人生活；部分用户原话来自记忆中的转述，标点与口语可能有整理痕迹；「推断」段落是基于行为的合理外推，不等同于本人自述。五个视角观察的时段并不一致 —— WorkBuddy 自 8 月底，DSH 自 9 月下旬，QQAGENT 自 10 月中，Trae 与 WorkBuddy AI 自 10 月下旬，于是越靠后的视角看到的项目越集中、越专项，这不是人格变化，而是分工不同。五份「印象」是同一批事实的不同切面，不是五个人格的独立判断。画像会随新记录变化，不应被当作固定标签。</p>
 </footer>
 
 </main>
@@ -1171,6 +1305,20 @@
     /* 手机版章节条只在「完整档案」下出现（CSS 里按 body[data-active] 判），
        在这里同步状态，是它与面板唯一的耦合点。 */
     document.body.setAttribute("data-active", keys[i]);
+
+    /* 六个标签在窄屏放不下：从 hash 直接落位到靠右的标签时，
+       它可能停在视口外，用户以为没切过去。手动推一下 scrollLeft
+       （不能用 scrollIntoView，那会把整页也滚走）。
+       留白取 30px = 渐隐带宽：留得比它窄，后面的标签会被渐隐整体吃掉，
+       看上去像「右边什么都没有」，反而更糟。 */
+    if (bar && bar.scrollWidth > bar.clientWidth + 1) {
+      var el = tabs[i];
+      var l = el.offsetLeft, r = l + el.offsetWidth;
+      var pad = 30;
+      if (l < bar.scrollLeft + pad) bar.scrollLeft = Math.max(0, l - pad);
+      else if (r > bar.scrollLeft + bar.clientWidth - pad) bar.scrollLeft = r - bar.clientWidth + pad;
+    }
+    syncEdge();
       /* 面板高度不同，切完可能停在超出新内容的位置上（贴底变空白）。
          已经滚过标签栏的话，把标签栏重新顶到视口顶端，等于从新面板开头读。
          临时关掉 scroll-behavior:smooth，否则这里会变成一段缓慢的自动滚动。 */
@@ -1185,6 +1333,22 @@
         }
       }
     }
+
+    /* 横滑提示：滑到哪一头，就在哪一头收一道渐隐（CSS 的 --fadeL/--fadeR）。
+       窄屏时六个标签里有一半在视口外，没有这道渐隐，它们等于不存在。 */
+    function syncEdge() {
+      if (!bar) return;
+      var max = bar.scrollWidth - bar.clientWidth;
+      var m = [];
+      if (max > 1) {
+        if (bar.scrollLeft > 2) m.push("left");
+        if (bar.scrollLeft < max - 2) m.push("right");
+      }
+      if (m.length) bar.setAttribute("data-more", m.join(" "));
+      else bar.removeAttribute("data-more");
+    }
+    if (bar) bar.addEventListener("scroll", syncEdge, { passive: true });
+    window.addEventListener("resize", syncEdge);
 
     tabs.forEach(function (t, i) {
       t.addEventListener("click", function () {
